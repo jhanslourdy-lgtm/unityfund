@@ -51,10 +51,21 @@ public class PaymentController {
             @RequestHeader("Stripe-Signature") String sigHeader,
             @Value("${stripe.webhook.secret:}") String secret) {
         try {
-            stripeProvider.handleWebhook(payload, sigHeader, secret);
+            // Vérifier que le secret est configuré
+            if (secret == null || secret.isEmpty() || secret.contains("localhost")) {
+                return ResponseEntity.status(500).body("Webhook secret non configuré");
+            }
+            
+            String transactionId = stripeProvider.handleWebhook(payload, sigHeader, secret);
+            
+            if (transactionId != null) {
+                // Confirmer le paiement en base (met à jour la campagne, etc.)
+                paymentService.confirmPayment(transactionId, "{\"status\": \"SUCCESS\", \"provider\": \"stripe\"}");
+            }
+            
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
-            return ResponseEntity.status(400).body("Erreur webhook");
+            return ResponseEntity.status(400).body("Erreur webhook: " + e.getMessage());
         }
     }
     
@@ -65,7 +76,7 @@ public class PaymentController {
         try {
             if ("SUCCESS".equals(status)) {
                 paymentService.confirmPayment(transactionId, "{\"status\": \"SUCCESS\"}");
-                return "redirect:/payment/success";
+                return "redirect:/donation/success?transactionId=" + transactionId;
             }
             return "redirect:/payment/failed";
         } catch (Exception e) {

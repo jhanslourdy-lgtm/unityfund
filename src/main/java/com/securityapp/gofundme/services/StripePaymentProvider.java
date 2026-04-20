@@ -19,7 +19,7 @@ public class StripePaymentProvider {
     public PaymentIntent createIntent(Payment payment, Campaign campaign, User donor) throws StripeException {
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                 .setAmount(payment.getAmount().multiply(new java.math.BigDecimal("100")).longValue())
-                .setCurrency("eur")
+                .setCurrency("usd") // ou "eur" selon ta préférence
                 .setAutomaticPaymentMethods(
                     PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
                         .setEnabled(true)
@@ -40,13 +40,17 @@ public class StripePaymentProvider {
         );
     }
     
-    public void handleWebhook(String payload, String sigHeader, String secret) throws Exception {
+    /**
+     * Traite le webhook Stripe et retourne le transactionId interne si succès
+     */
+    public String handleWebhook(String payload, String sigHeader, String secret) throws Exception {
         com.stripe.model.Event event = com.stripe.net.Webhook.constructEvent(payload, sigHeader, secret);
         
         if ("payment_intent.succeeded".equals(event.getType())) {
             com.stripe.model.PaymentIntent intent = (com.stripe.model.PaymentIntent) event.getDataObjectDeserializer()
                 .getObject().orElseThrow();
-            String transactionId = intent.getMetadata().get("transaction_id");
+            return intent.getMetadata().get("transaction_id");
         }
+        return null;
     }
 }
