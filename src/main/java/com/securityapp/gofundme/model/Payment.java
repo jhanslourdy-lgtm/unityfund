@@ -31,8 +31,8 @@ public class Payment extends BaseAudit {
     private BigDecimal processingFee; // Frais Stripe/MonCash
     private BigDecimal netAmount; // Montant pour le créateur
     
-    @Column(length = 1000)
-    private String providerResponse; // JSON réponse API
+    @Column(columnDefinition = "TEXT")
+private String providerResponse; // JSON réponse API
     
     private String stripePaymentIntentId; // Si Stripe
     private String moncashTransactionId; // Si MonCash
