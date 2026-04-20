@@ -68,7 +68,20 @@ public class PaymentController {
             return ResponseEntity.status(400).body("Erreur webhook: " + e.getMessage());
         }
     }
-    
+    /**
+ * Confirmation manuelle après succès Stripe (fallback si webhook lent/absent)
+ */
+@PostMapping("/confirm")
+@ResponseBody
+public ResponseEntity<?> confirmPaymentManually(@RequestBody Map<String, String> payload) {
+    try {
+        String transactionId = payload.get("transactionId");
+        paymentService.confirmPayment(transactionId, "{\"status\": \"SUCCESS\", \"provider\": \"stripe_manual\"}");
+        return ResponseEntity.ok(Map.of("success", true));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    }
+}
     @GetMapping("/callback/moncash")
     public String handleMonCashCallback(
             @RequestParam("transactionId") String transactionId,

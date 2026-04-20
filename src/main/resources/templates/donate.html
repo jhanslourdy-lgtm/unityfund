@@ -303,9 +303,16 @@
                         throw new Error(error.message);
                     }
 
-                    if (paymentIntent.status === 'succeeded') {
-                        window.location.href = '/donation/success?transactionId=' + data.transactionId;
-                    }
+                   if (paymentIntent.status === 'succeeded') {
+    // Confirmer manuellement côté serveur (au cas où le webhook est lent)
+    await fetch('/api/payments/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId: data.transactionId })
+    });
+    
+    window.location.href = '/donation/success?transactionId=' + data.transactionId;
+}
                 } else if (method === 'MONCASH') {
                     // Redirection MonCash (token = clientSecret dans notre implémentation)
                     alert('Redirection vers MonCash... (Token: ' + data.clientSecret + ')');
