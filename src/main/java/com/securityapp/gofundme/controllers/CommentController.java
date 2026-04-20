@@ -4,6 +4,7 @@
  */
 package com.securityapp.gofundme.controllers;
 
+import com.securityapp.gofundme.dto.CommentResponse;
 import com.securityapp.gofundme.model.Comment;
 import com.securityapp.gofundme.model.User;
 import com.securityapp.gofundme.services.CommentService;
@@ -28,9 +29,9 @@ public class CommentController {
     private UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<Comment>> getComments(@PathVariable Long campaignId) {
-        return ResponseEntity.ok(commentService.getCommentsByCampaign(campaignId));
-    }
+public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long campaignId) {
+    return ResponseEntity.ok(commentService.getCommentsByCampaign(campaignId));
+}
 
     @PostMapping
     public ResponseEntity<?> addComment(@PathVariable Long campaignId,

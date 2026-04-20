@@ -4,6 +4,7 @@
  */
 package com.securityapp.gofundme.services;
 
+import com.securityapp.gofundme.dto.CommentResponse;
 import com.securityapp.gofundme.model.Campaign;
 import com.securityapp.gofundme.model.Comment;
 import com.securityapp.gofundme.model.User;
@@ -41,9 +42,20 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public List<Comment> getCommentsByCampaign(Long campaignId) {
-        return commentRepository.findByCampaignIdOrderByCreatedAtDesc(campaignId);
-    }
+   public List<CommentResponse> getCommentsByCampaign(Long campaignId) {
+    return commentRepository.findByCampaignIdOrderByCreatedAtDesc(campaignId).stream()
+        .map(c -> new CommentResponse(
+            c.getId(),
+            c.getContent(),
+            new CommentResponse.UserSummary(
+                c.getUser().getFirstName(),
+                c.getUser().getLastName(),
+                c.getUser().getProfileImageUrl()
+            ),
+            c.getCreatedAt()
+        ))
+        .toList();
+}
 
     @Transactional
     public void deleteComment(Long commentId, User user) {
