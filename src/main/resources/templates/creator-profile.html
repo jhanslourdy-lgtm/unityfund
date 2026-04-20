@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title th:text="'Profil de ' + ${creator.firstName} + ' | UnityFund'">Profil</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#10b77f",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#10221c",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .campaign-card { transition: all 0.3s ease; }
+        .campaign-card:hover { transform: translateY(-4px); }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-background-dark/80 border-b border-slate-200/50 dark:border-slate-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a th:href="@{/home}" class="flex items-center gap-2 text-primary">
+                    <span class="material-symbols-outlined text-3xl font-bold">volunteer_activism</span>
+                    <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">UnityFund</span>
+                </a>
+                <a th:href="@{/explore}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Explorer</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Profil -->
+    <section class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-5xl mx-auto px-4 py-12">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <!-- Avatar -->
+                <div class="relative">
+                    <div class="size-32 rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl font-bold overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl">
+                        <img th:if="${creator.profileImageUrl != null}" th:src="${creator.profileImageUrl}" class="w-full h-full object-cover" alt="Avatar"/>
+                        <span th:unless="${creator.profileImageUrl != null}" th:text="${#strings.substring(creator.firstName,0,1) + #strings.substring(creator.lastName,0,1)}">UN</span>
+                    </div>
+                    <div class="absolute bottom-1 right-1 bg-primary text-white rounded-full p-1.5 shadow-lg">
+                        <span class="material-symbols-outlined text-sm">verified</span>
+                    </div>
+                </div>
+
+                <!-- Infos -->
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="text-3xl font-black text-slate-900 dark:text-white mb-2" th:text="${creator.firstName + ' ' + creator.lastName}">Nom</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mb-4" th:if="${creator.bio != null}" th:text="${creator.bio}">Bio...</p>
+                    <p class="text-slate-500 dark:text-slate-400 mb-4" th:unless="${creator.bio != null}">Aucune bio renseignée.</p>
+                    
+                    <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-slate-600 dark:text-slate-300">
+                        <span th:if="${creator.country != null}" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-primary">location_on</span>
+                            <span th:text="${creator.country}">Pays</span>
+                        </span>
+                        <span th:if="${creator.website != null}">
+                            <a th:href="${creator.website}" target="_blank" class="text-primary hover:underline flex items-center gap-1">
+                                <span class="material-symbols-outlined">link</span>
+                                Site web
+                            </a>
+                        </span>
+                        <span class="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
+                            <span class="material-symbols-outlined text-sm">payments</span>
+                            <span th:text="${#numbers.formatInteger(totalRaised, 1, 'WHITESPACE') + ' $'}">0 $</span>
+                            récoltés
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Campagnes du créateur -->
+    <section class="max-w-5xl mx-auto px-4 py-12">
+        <h2 class="text-2xl font-bold mb-8">Campagnes de <span th:text="${creator.firstName}">l'utilisateur</span></h2>
+        
+        <div th:if="${#lists.isEmpty(campaigns)}" class="text-center py-12 text-slate-500">
+            Aucune campagne pour le moment.
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <article th:each="campaign : ${campaigns}" class="campaign-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl">
+                <div class="relative h-48 overflow-hidden">
+                    <img th:src="${campaign.imageUrl != null} ? ${campaign.imageUrl} : 'https://via.placeholder.com/400x300'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+                </div>
+                <div class="p-5">
+                    <h3 th:text="${campaign.title}" class="font-bold text-lg mb-2 group-hover:text-primary transition-colors">Titre</h3>
+                    <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+                        <div class="bg-primary h-full rounded-full" th:style="'width: ' + ${campaign.getPercentage()} + '%'"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="font-bold" th:text="${campaign.currentAmount + ' $'}">0 $</span>
+                        <span class="text-slate-400" th:text="${campaign.getPercentage()} + '%'">0%</span>
+                    </div>
+                    <a th:href="@{/campaign/details/{id}(id=${campaign.id})}" class="mt-4 block text-center w-full py-2 bg-slate-50 dark:bg-slate-700 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-all">Voir la campagne</a>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-8 text-center text-sm text-slate-500">
+        <p>© 2026 UnityFund. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>s

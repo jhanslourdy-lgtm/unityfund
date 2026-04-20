@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>UnityFund - Explorer les campagnes</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#10b77f",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#10221c",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .campaign-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .campaign-card:hover { transform: translateY(-4px); }
+        .category-pill.active { background-color: #10b77f; color: white; border-color: #10b77f; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .like-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .like-btn.liked { animation: heartPop 0.3s ease; }
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .pagination-btn { @apply px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors; }
+        .pagination-btn.active { @apply bg-primary text-white border-primary hover:bg-primary/90; }
+        .pagination-btn.disabled { @apply opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-slate-800; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased">
+
+    <!-- Navigation (inchangée) -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-background-dark/80 border-b border-slate-200/50 dark:border-slate-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-8">
+                    <a th:href="@{/home}" class="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
+                        <span class="material-symbols-outlined text-3xl font-bold">volunteer_activism</span>
+                        <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">UnityFund</span>
+                    </a>
+                    <div class="hidden md:flex items-center gap-6">
+                        <a th:href="@{/explore}" class="text-sm font-semibold text-primary border-b-2 border-primary pb-5 mt-5">Explorer</a>
+                        <a th:href="@{/campaign/create}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">Lancer une cagnotte</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div sec:authorize="isAnonymous()" class="flex items-center gap-3">
+                        <a th:href="@{/login}" class="hidden sm:inline-flex text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 px-4 py-2 rounded-full transition-all">Connexion</a>
+                        <a th:href="@{/register}" class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 transition-all shadow-sm shadow-primary/20">S'inscrire</a>
+                    </div>
+                    <div sec:authorize="isAuthenticated()" class="flex items-center gap-3">
+                        <a th:href="@{/dashboard}" class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-sm">dashboard</span>
+                            </div>
+                            <span class="hidden sm:inline">Mon espace</span>
+                        </a>
+                        <form th:action="@{/logout}" method="POST" class="inline">
+                            <button type="submit" class="text-sm font-semibold text-slate-500 hover:text-red-500 transition-colors px-3 py-2">Déconnexion</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header avec recherche -->
+    <section class="relative bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-4xl mx-auto px-4 py-16 sm:py-20 text-center">
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tight mb-6 text-slate-900 dark:text-white">
+                Trouvez une cause qui vous <span class="text-primary">ressemble</span>
+            </h1>
+            <p class="text-lg text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
+                Des milliers de personnes utilisent UnityFund pour financer leurs projets.
+            </p>
+            
+            <form th:action="@{/explore}" method="get" class="relative max-w-2xl mx-auto group">
+                <div class="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
+                <div class="relative flex items-center bg-white dark:bg-slate-800 rounded-full shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-700 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all">
+                    <span class="material-symbols-outlined text-slate-400 ml-5 text-xl">search</span>
+                    <input type="text" name="q" th:value="${searchQuery}" 
+                           class="w-full py-4 px-4 bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 text-base"
+                           placeholder="Rechercher par titre..."/>
+                    <button type="submit" class="mr-2 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-2.5 rounded-full transition-all">
+                        Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Filtres catégories -->
+    <section class="sticky top-16 z-40 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-2 py-4 overflow-x-auto hide-scrollbar">
+                <a th:href="@{/explore}" 
+                   th:classappend="${activeCategory == null && searchQuery == null} ? 'active' : ''"
+                   class="category-pill flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-all">
+                    <span class="material-symbols-outlined text-lg">apps</span>
+                    Toutes
+                </a>
+                <a th:each="cat : ${categories}" 
+                   th:href="@{/explore(category=${cat.name})}"
+                   th:classappend="${activeCategory != null && activeCategory == cat.name} ? 'active' : ''"
+                   class="category-pill flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-all capitalize">
+                    <span th:text="${cat.name}">Catégorie</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Résultats -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+                    <span th:if="${searchQuery != null}" th:text="'Résultats pour &quot;' + ${searchQuery} + '&quot;'">Résultats</span>
+                    <span th:if="${activeCategory != null}" th:text="'Campagnes ' + ${activeCategory}">Catégorie</span>
+                    <span th:if="${searchQuery == null && activeCategory == null}">Toutes les campagnes</span>
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                    <span th:text="${campaignPage.totalElements}">0</span> résultat(s) • 
+                    Page <span th:text="${currentPage + 1}">1</span> sur <span th:text="${totalPages}">1</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Grille de campagnes -->
+        <div th:if="${#lists.isEmpty(campaigns)}" class="text-center py-20">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <span class="material-symbols-outlined text-4xl text-slate-400">search_off</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Aucune campagne trouvée</h3>
+            <p class="text-slate-500 max-w-md mx-auto">Essayez avec d'autres termes de recherche ou parcourez toutes les catégories.</p>
+            <a th:href="@{/explore}" class="inline-block mt-6 text-primary font-bold hover:underline">Voir toutes les campagnes</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <article th:each="campaign : ${campaigns}" class="campaign-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:shadow-primary/5">
+                <!-- Image -->
+                <div class="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-700">
+                    <img th:src="${campaign.imageUrl != null} ? ${campaign.imageUrl} : 'https://via.placeholder.com/400x300?text=Pas+d%27image'" 
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                         th:alt="${campaign.title}"/>
+                    <div class="absolute top-3 left-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-primary border border-primary/20 uppercase" 
+                              th:text="${campaign.category != null} ? ${campaign.category.name} : 'Général'">Catégorie</span>
+                    </div>
+                    <button th:data-id="${campaign.id}" 
+                            th:classappend="${userLikes != null && userLikes.get(campaign.id) != null && userLikes.get(campaign.id)} ? 'liked text-red-500' : 'text-slate-400'"
+                            class="like-btn absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-center shadow-md hover:shadow-lg transition-all z-10">
+                        <span class="material-symbols-outlined like-icon text-lg" 
+                              th:text="${userLikes != null && userLikes.get(campaign.id) != null && userLikes.get(campaign.id)} ? 'favorite' : 'favorite_border'">favorite_border</span>
+                    </button>
+                </div>
+
+                <!-- Contenu -->
+                <div class="p-5">
+                    <h3 th:text="${campaign.title}" class="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">Titre</h3>
+                    <p th:text="${campaign.description}" class="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 leading-relaxed">Description</p>
+
+<!--                     Auteur 
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold"
+                             th:text="${campaign.user != null} ? ${#strings.substring(campaign.user.firstName, 0, 1) + #strings.substring(campaign.user.lastName, 0, 1)} : 'U'">UN</div>
+                        <span class="text-xs text-slate-600 dark:text-slate-300 font-medium truncate"
+                              th:text="${campaign.user != null} ? ${campaign.user.firstName + ' ' + campaign.user.lastName} : 'Anonyme'">Nom</span>
+                    </div>-->
+                                            <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold overflow-hidden">
+                            <img th:if="${campaign.user != null && campaign.user.profileImageUrl != null}" th:src="${campaign.user.profileImageUrl}" class="w-full h-full object-cover"/>
+                            <span th:unless="${campaign.user != null && campaign.user.profileImageUrl != null}" th:text="${campaign.user != null} ? ${#strings.substring(campaign.user.firstName, 0, 1) + #strings.substring(campaign.user.lastName, 0, 1)} : 'U'">UN</span>
+                        </div>
+
+                    <!-- Likes -->
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
+                        <span class="material-symbols-outlined text-sm text-red-400">favorite</span>
+                        <span class="font-semibold like-count" th:text="${likeCounts != null && likeCounts.get(campaign.id) != null} ? ${likeCounts.get(campaign.id)} : '0'">0</span>
+                        <span>j'aimes</span>
+                    </div>
+
+                    <!-- Progression -->
+                    <div class="mb-4" th:with="percentage=${campaign.goalAmount != null && campaign.goalAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? ${campaign.currentAmount.multiply(new java.math.BigDecimal('100')).divide(campaign.goalAmount, 0, T(java.math.RoundingMode).HALF_UP)} : 0">
+                        <div class="flex justify-between items-end mb-1.5">
+                            <div>
+                                <span class="text-lg font-black text-slate-900 dark:text-white" 
+                                      th:text="${#numbers.formatInteger(campaign.currentAmount, 1, 'WHITESPACE') + ' $'}">0 $</span>
+                                <span class="text-xs text-slate-400 font-medium ml-1" 
+                                      th:text="'sur ' + ${#numbers.formatInteger(campaign.goalAmount, 1, 'WHITESPACE') + ' $'}">sur 0 $</span>
+                            </div>
+                            <span class="text-sm font-bold text-primary" th:text="${percentage + '%'}">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary rounded-full transition-all duration-1000" th:style="'width: ' + ${percentage} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <a th:href="@{/campaign/details/{id}(id=${campaign.id})}" 
+                       class="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white transition-all group/btn">
+                        <span>Voir la campagne</span>
+                        <span class="material-symbols-outlined text-lg transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
+                    </a>
+                </div>
+            </article>
+        </div>
+
+        <!-- ========== PAGINATION ========== -->
+        <div th:if="${totalPages > 1}" class="mt-12 flex items-center justify-center gap-2">
+            <!-- Bouton Précédent -->
+            <a th:if="${currentPage > 0}" 
+               th:href="@{/explore(page=${currentPage - 1}, q=${searchQuery}, category=${activeCategory})}"
+               class="pagination-btn flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                Précédent
+            </a>
+            <span th:unless="${currentPage > 0}" class="pagination-btn disabled flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                Précédent
+            </span>
+
+            <!-- Numéros de page -->
+            <div class="flex items-center gap-1">
+                <a th:each="pageNum : ${pageNumbers}"
+                   th:href="@{/explore(page=${pageNum - 1}, q=${searchQuery}, category=${activeCategory})}"
+                   th:text="${pageNum}"
+                   th:classappend="${pageNum == currentPage + 1} ? 'active' : ''"
+                   class="pagination-btn min-w-[40px] text-center">
+                   1
+                </a>
+            </div>
+
+            <!-- Bouton Suivant -->
+            <a th:if="${currentPage < totalPages - 1}" 
+               th:href="@{/explore(page=${currentPage + 1}, q=${searchQuery}, category=${activeCategory})}"
+               class="pagination-btn flex items-center gap-1">
+                Suivant
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </a>
+            <span th:unless="${currentPage < totalPages - 1}" class="pagination-btn disabled flex items-center gap-1">
+                Suivant
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </span>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-12 text-center">
+        <div class="flex items-center justify-center gap-2 text-primary mb-4">
+            <span class="material-symbols-outlined text-2xl">volunteer_activism</span>
+            <span class="text-xl font-black">UnityFund</span>
+        </div>
+        <p class="text-sm text-slate-400">© 2026 UnityFund. Tous droits réservés.</p>
+    </footer>
+
+    <!-- Script likes (inchangé) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const campaignId = this.dataset.id;
+                const icon = this.querySelector('.like-icon');
+                const countSpan = this.closest('article').querySelector('.like-count');
+                
+                try {
+                    const response = await fetch('/api/campaigns/' + campaignId + '/like', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    this.classList.toggle('liked', data.liked);
+                    this.classList.toggle('text-red-500', data.liked);
+                    this.classList.toggle('text-slate-400', !data.liked);
+                    
+                    if (icon) icon.textContent = data.liked ? 'favorite' : 'favorite_border';
+                    if (countSpan) countSpan.textContent = data.count;
+                    
+                    if (data.liked) {
+                        this.style.transform = 'scale(1.3)';
+                        setTimeout(() => this.style.transform = 'scale(1)', 200);
+                    }
+                } catch (err) {
+                    console.error('Erreur like:', err);
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

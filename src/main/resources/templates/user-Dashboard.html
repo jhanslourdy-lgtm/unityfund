@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>UnityFund | Tableau de bord</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#10b77f",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#10221c",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    
+    <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 hidden md:flex">
+        <div class="flex flex-col gap-8">
+            <div class="flex items-center gap-3 px-2">
+                <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined">volunteer_activism</span>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-slate-900 dark:text-white text-lg font-bold leading-none">UnityFund</h1>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Dashboard Gestion</p>
+                </div>
+            </div>
+            <nav class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-semibold" th:href="@{/dashboard}">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="text-sm">Mes Campagnes</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" th:href="@{/donations/history}">
+                    <span class="material-symbols-outlined">favorite</span>
+                    <span class="text-sm">Dons effectues</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" th:href="@{/profile/settings}">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-sm">Parametres</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <a th:href="@{/campaign/create}" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all">
+                <span class="material-symbols-outlined text-sm">add</span>
+                <span class="text-sm">Creer une campagne</span>
+            </a>
+            <a th:href="@{/profile/settings}" class="flex items-center gap-3 p-2 border-t border-slate-200 dark:border-slate-800 mt-2 pt-4 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group">
+    <div class="size-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden shrink-0">
+        <img th:if="${user.profileImageUrl != null}" th:src="${user.profileImageUrl}" class="w-full h-full object-cover"/>
+        <span th:unless="${user.profileImageUrl != null}" th:text="${#strings.substring(user.firstName, 0, 1)}">U</span>
+    </div>
+    <div class="flex flex-col flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate group-hover:text-primary transition-colors" th:text="${user.firstName + ' ' + user.lastName}">Utilisateur</p>
+        <p class="text-xs text-slate-500">Modifier mon profil</p>
+    </div>
+    <span class="material-symbols-outlined text-slate-400 text-sm group-hover:text-primary">chevron_right</span>
+</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-10">
+            <div class="flex items-center gap-4 flex-1">
+                <div class="relative w-full max-w-md hidden sm:block">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                    <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100" placeholder="Rechercher..." type="text"/>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="p-2 text-slate-500 hover:text-red-500 rounded-lg">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <div class="p-6 md:p-8 space-y-8 overflow-y-auto h-[calc(100vh-64px)]">
+            <!-- ALERTE PROFIL INCOMPLET -->
+    <div th:if="${user.bio == null || user.profileImageUrl == null}" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-center gap-4">
+        <div class="bg-amber-100 dark:bg-amber-800/50 p-2 rounded-lg">
+            <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">person_alert</span>
+        </div>
+        <div class="flex-1">
+            <h4 class="font-bold text-amber-800 dark:text-amber-200 text-sm">Votre profil est incomplet</h4>
+            <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Ajoutez une photo et une bio pour rassurer vos futurs donateurs.</p>
+        </div>
+        <a th:href="@{/profile/settings}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors">
+            Compléter
+        </a>
+    </div>
+
+    <div class="flex flex-col gap-2">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Bon retour, <span th:text="${user.firstName}">Ami</span></h2>
+        <p class="text-slate-500 dark:text-slate-400">Voici un resume de vos activites de financement.</p>
+    </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Recolte</span>
+                    <p class="text-3xl font-bold text-slate-900 dark:text-white" th:text="${#numbers.formatInteger(totalRaised, 1, 'WHITESPACE') + ' $'}">0 $</p>
+                    <div class="mt-4 h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full" th:style="'width: ' + ${globalProgress} + '%'"></div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">Dons Effectues</span>
+                    <p class="text-3xl font-bold text-slate-900 dark:text-white" th:text="${#numbers.formatInteger(totalDonated, 1, 'WHITESPACE') + ' $'}">0 $</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">Campagnes Actives</span>
+                    <p class="text-3xl font-bold text-slate-900 dark:text-white" th:text="${#lists.size(campaigns)}">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <h3 class="text-lg font-bold">Mes Campagnes</h3>
+                    <a th:href="@{/campaigns/all}" class="text-primary text-sm font-bold hover:underline">Tout voir</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4 font-semibold">Details</th>
+                                <th class="px-6 py-4 font-semibold">Statut</th>
+                                <th class="px-6 py-4 font-semibold">Recolte</th>
+                                <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tr th:each="campaign : ${campaigns}">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="size-12 rounded-lg bg-slate-200 bg-cover bg-center" 
+                                             th:style="'background-image: url(' + ${campaign.imageUrl} + ')'"></div>
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-bold text-slate-900 dark:text-white" th:text="${campaign.title}">Titre</span>
+                                            <span class="text-xs text-slate-500" th:text="'Modifie le ' + ${#temporals.format(campaign.updatedAt, 'dd/MM/yyyy')}">Date</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span th:classappend="${campaign.status == 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}"
+                                          class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold">
+                                        <span class="size-1.5 rounded-full" th:classappend="${campaign.status == 'ACTIVE' ? 'bg-green-500' : 'bg-slate-400'}"></span>
+                                        <span th:text="${campaign.status}">Statut</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-sm font-bold" th:text="${campaign.currentAmount + ' $'}">0 $</span>
+                                        <span class="text-[10px] text-slate-400 uppercase font-bold" th:text="${campaign.getPercentage() + '% de l\'objectif'}">0%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a th:href="@{/campaign/edit/{id}(id=${campaign.id})}" class="text-slate-400 hover:text-primary mr-3">
+                                        <span class="material-symbols-outlined">edit</span>
+                                    </a>
+                                    <a th:href="@{/campaign/view/{id}(id=${campaign.id})}" class="text-slate-400 hover:text-primary">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(campaigns)}">
+                                <td colspan="4" class="px-6 py-10 text-center text-slate-400">Aucune campagne trouvee.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+                <div class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 flex items-center gap-6">
+                    <div class="bg-primary size-12 rounded-full flex items-center justify-center text-white shrink-0">
+                        <span class="material-symbols-outlined">trending_up</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Booster vos dons</h4>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Ajoutez une video pour multiplier vos chances de financement.</p>
+                    </div>
+                </div>
+                <div class="bg-slate-100 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-6">
+                    <div class="bg-slate-200 dark:bg-slate-700 size-12 rounded-full flex items-center justify-center text-slate-600 shrink-0">
+                        <span class="material-symbols-outlined">share</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Partage Facile</h4>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Diffusez votre campagne sur vos réseaux en un clic.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="light" lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>UnityFund - Soutenez des causes qui comptent</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#10b77f",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#10221c",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-nav { backdrop-filter: blur(12px); background-color: rgba(246, 248, 247, 0.8); }
+        .campaign-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .campaign-card:hover { transform: translateY(-4px); }
+        .like-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .like-btn.liked { animation: heartPop 0.3s ease; }
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+
+<nav class="glass-nav sticky top-0 z-50 border-b border-primary/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-2 text-primary">
+                    <span class="material-symbols-outlined text-3xl font-bold">volunteer_activism</span>
+                    <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">UnityFund</span>
+                </div>
+                <div class="hidden md:flex items-center gap-6">
+                    <a class="text-sm font-medium hover:text-primary transition-colors" th:href="@{/explore}">Parcourir</a>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div sec:authorize="isAnonymous()" class="flex items-center gap-4">
+                    <a th:href="@{/login}" class="hidden sm:block text-sm font-bold px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-primary/10 rounded-lg transition-all">Connexion</a>
+                    <a th:href="@{/register}" class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-lg hover:brightness-110 transition-all shadow-sm">S'inscrire</a>
+                </div>
+
+                <div sec:authorize="isAuthenticated()" class="flex items-center gap-4">
+                    <a th:href="@{/dashboard}" class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-sm">dashboard</span>
+                        <span class="hidden sm:inline">Dashboard</span>
+                    </a>
+                    <form th:action="@{/logout}" method="POST" class="inline">
+                        <button type="submit" class="text-sm font-bold text-red-500 hover:text-red-600 transition-colors">Déconnexion</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<header class="relative overflow-hidden pt-16 pb-24 lg:pt-32 lg:pb-40 text-center lg:text-left">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div class="flex flex-col gap-8">
+                <h1 class="text-5xl lg:text-7xl font-black leading-[1.1] tracking-tight text-slate-900 dark:text-white">
+                    Soutenez une cause qui vous <span class="text-primary">tient à cœur</span>
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-400 max-w-xl">
+                    Rejoignez des milliers de personnes qui font la différence. Créez votre propre campagne ou contribuez à une cause vérifiée.
+                </p>
+                <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                    <a th:href="@{/campaign/create}" class="bg-primary text-white font-bold px-8 py-4 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all text-lg">Lancer une cagnotte</a>
+                    <a th:href="@{/explore}" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold px-8 py-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all text-lg">Explorer</a>
+                </div>
+            </div>
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=2070&auto=format&fit=crop" class="rounded-3xl shadow-2xl rotate-2 hover:rotate-0 transition-all duration-500 aspect-square object-cover" alt="Soutien communautaire">
+            </div>
+        </div>
+    </div>
+</header>
+
+<section class="py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-12">
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white">Cagnottes du moment</h2>
+            <a th:href="@{/explore}" class="text-primary font-bold hover:underline">Voir tout</a>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <article th:each="campaign : ${campaigns}" class="campaign-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 dark:border-slate-700">
+                <div class="relative h-56 overflow-hidden">
+                    <img th:src="${campaign.imageUrl != null} ? ${campaign.imageUrl} : 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=800&auto=format&fit=crop'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Cagnotte image"/>
+                    <span th:text="${campaign.category != null} ? ${campaign.category.name} : 'Général'" class="absolute top-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-primary uppercase">Catégorie</span>
+                    
+                    <button th:data-id="${campaign.id}" 
+                            th:classappend="${userLikes != null && userLikes.get(campaign.id) != null && userLikes.get(campaign.id)} ? 'liked text-red-500' : 'text-slate-400'"
+                            class="like-btn absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-center shadow-md hover:shadow-lg transition-all z-10">
+                        <span class="material-symbols-outlined like-icon text-lg" 
+                              th:text="${userLikes != null && userLikes.get(campaign.id) != null && userLikes.get(campaign.id)} ? 'favorite' : 'favorite_border'">
+                            favorite_border
+                        </span>
+                    </button>
+                </div>
+                                <div class="p-6">
+                    <h3 th:text="${campaign.title}" class="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary transition-colors h-14 overflow-hidden">Titre de la cagnotte</h3>
+                    
+                    <!-- AUTEUR (NOUVEAU) -->
+                    <a th:href="@{/creator/{id}(id=${campaign.user != null ? campaign.user.id : 0})}" class="flex items-center gap-2 mb-3 group/creator">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold overflow-hidden shrink-0">
+                            <img th:if="${campaign.user != null && campaign.user.profileImageUrl != null}" th:src="${campaign.user.profileImageUrl}" class="w-full h-full object-cover"/>
+                            <span th:unless="${campaign.user != null && campaign.user.profileImageUrl != null}" th:text="${campaign.user != null} ? ${#strings.substring(campaign.user.firstName, 0, 1) + #strings.substring(campaign.user.lastName, 0, 1)} : 'U'">UN</span>
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium truncate group-hover/creator:text-primary transition-colors"
+                              th:text="${campaign.user != null} ? ${campaign.user.firstName + ' ' + campaign.user.lastName} : 'Anonyme'">Nom</span>
+                    </a>
+                    
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-sm text-red-400">favorite</span>
+                        <span class="text-xs text-slate-500 font-semibold">
+                            <span class="like-count" th:text="${likeCounts != null && likeCounts.get(campaign.id) != null} ? ${likeCounts.get(campaign.id)} : '0'">0</span>
+                            <span>j'aimes</span>
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-primary h-full rounded-full" th:style="'width: ' + ${campaign.getPercentage()} + '%'"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <div>
+                                <span th:text="${#numbers.formatInteger(campaign.currentAmount, 1, 'WHITESPACE') + ' $'}" class="font-black text-slate-900 dark:text-white">0 $</span>
+                                <span th:text="'sur ' + ${#numbers.formatInteger(campaign.goalAmount, 1, 'WHITESPACE') + ' $'}" class="text-slate-500 ml-1">sur 0 $</span>
+                            </div>
+                            <span th:text="${campaign.getPercentage()} + '%'" class="font-bold text-primary">0%</span>
+                        </div>
+                    </div>
+                    <a th:href="@{/campaign/details/{id}(id=${campaign.id})}" class="mt-6 block text-center w-full py-2 bg-slate-50 dark:bg-slate-700 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-all">Voir les détails</a>
+                </div>
+            </article>
+        </div>
+    </div>
+            <!-- Pagination pour index.html -->
+        <div th:if="${totalPages > 1}" class="mt-12 flex items-center justify-center gap-2">
+            <a th:if="${currentPage > 0}" 
+               th:href="@{/home(page=${currentPage - 1})}"
+               class="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                Précédent
+            </a>
+            
+            <div class="flex items-center gap-1">
+                <a th:each="pageNum : ${#numbers.sequence(1, totalPages)}"
+                   th:href="@{/home(page=${pageNum - 1})}"
+                   th:text="${pageNum}"
+                   th:classappend="${pageNum == currentPage + 1} ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'"
+                   class="px-4 py-2 rounded-lg border font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors min-w-[40px] text-center">
+                   1
+                </a>
+            </div>
+            
+            <a th:if="${currentPage < totalPages - 1}" 
+               th:href="@{/home(page=${currentPage + 1})}"
+               class="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                Suivant
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </a>
+        </div>
+</section>
+
+<footer class="bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 py-8 text-center text-sm text-slate-500">
+    <p>© 2026 UnityFund - Projet Handy. Tous droits réservés.</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const campaignId = this.dataset.id;
+            const icon = this.querySelector('.like-icon');
+            const countSpan = this.closest('article').querySelector('.like-count');
+            
+            try {
+                const response = await fetch('/api/campaigns/' + campaignId + '/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                this.classList.toggle('liked', data.liked);
+                this.classList.toggle('text-red-500', data.liked);
+                this.classList.toggle('text-slate-400', !data.liked);
+                
+                if (icon) icon.textContent = data.liked ? 'favorite' : 'favorite_border';
+                if (countSpan) countSpan.textContent = data.count;
+                
+                if (data.liked) {
+                    this.style.transform = 'scale(1.3)';
+                    setTimeout(() => this.style.transform = 'scale(1)', 200);
+                }
+            } catch (err) {
+                console.error('Erreur like:', err);
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
