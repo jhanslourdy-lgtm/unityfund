@@ -123,7 +123,9 @@ public class MonCashPaymentProvider {
             
             // Montant en format attendu par MonCash (nombre avec 2 décimales)
             double amount = payment.getAmount().doubleValue();
-            
+            String returnUrl = baseUrl + "/api/payments/callback/moncash";
+    String cancelUrl = baseUrl + "/payment/failed";
+
             // Construire la requête selon la documentation MonCash
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("amount", amount);

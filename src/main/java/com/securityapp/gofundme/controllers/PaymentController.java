@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import org.springframework.ui.Model;
 
 @Controller
 @RequestMapping("/api/payments")
@@ -86,22 +87,40 @@ public ResponseEntity<?> confirmPaymentManually(@RequestBody Map<String, String>
 public String handleMonCashCallback(
         @RequestParam(value = "transactionId", required = false) String transactionId,
         @RequestParam(value = "orderId", required = false) String orderId,
-        @RequestParam(value = "status", defaultValue = "FAILED") String status) {
+        @RequestParam(value = "payment_token", required = false) String paymentToken,
+        @RequestParam(value = "status", defaultValue = "FAILED") String status,
+        Model model) {
+    
     try {
-        // MonCash peut renvoyer orderId ou transactionId selon la config
+        System.out.println("=== MONCASH CALLBACK ===");
+        System.out.println("transactionId: " + transactionId);
+        System.out.println("orderId: " + orderId);
+        System.out.println("status: " + status);
+        
+        // MonCash peut renvoyer orderId ou transactionId
         String effectiveTransactionId = (transactionId != null) ? transactionId : orderId;
         
         if (effectiveTransactionId == null) {
+            System.err.println("Aucun ID de transaction trouvé");
             return "redirect:/payment/failed";
         }
         
-        // En sandbox, on considère que le retour = succès si on arrive ici
-        // (MonCash redirige vers success URL uniquement si payé)
-        paymentService.confirmPayment(effectiveTransactionId, "{\"status\": \"SUCCESS\", \"provider\": \"moncash\"}");
-        return "redirect:/donation/success?transactionId=" + effectiveTransactionId;
+        // Vérifier le statut (en sandbox, on considère le callback comme succès)
+        if ("SUCCESS".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status) || status == null) {
+            paymentService.confirmPayment(effectiveTransactionId, "{\"status\": \"SUCCESS\", \"provider\": \"moncash\"}");
+            return "redirect:/donation/success?transactionId=" + effectiveTransactionId;
+        } else {
+            return "redirect:/payment/failed";
+        }
         
     } catch (Exception e) {
+        System.err.println("Erreur callback MonCash: " + e.getMessage());
+        e.printStackTrace();
         return "redirect:/payment/failed";
     }
+}
+@GetMapping("/payment/failed")
+public String paymentFailed() {
+    return "payment-failed";
 }
 }

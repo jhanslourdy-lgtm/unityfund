@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Paiement échoué | UnityFund</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#10b77f",
+                        "background-light": "#f6f8f7",
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background-light min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md text-center">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-4xl text-red-500">cancel</span>
+            </div>
+            
+            <h1 class="text-2xl font-bold text-slate-900 mb-2">Paiement échoué</h1>
+            <p class="text-slate-500 mb-6">Votre paiement n'a pas pu être traité. Veuillez réessayer.</p>
+            
+            <div class="flex flex-col gap-3">
+                <a th:href="@{/explore}" class="w-full py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-all">
+                    Explorer les campagnes
+                </a>
+                <button onclick="history.back()" class="w-full py-3 border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-all">
+                    Réessayer
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
