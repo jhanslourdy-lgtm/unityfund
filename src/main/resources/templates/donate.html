@@ -313,10 +313,11 @@
     
     window.location.href = '/donation/success?transactionId=' + data.transactionId;
 }
-                } else if (method === 'MONCASH') {
-    // Redirection vers le portail de paiement MonCash Sandbox
-    const moncashUrl = 'https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=' 
-        + encodeURIComponent(data.clientSecret);
+                }else if (method === 'MONCASH') {
+    // Le 'clientSecret' renvoyé par votre API contient ici le TOKEN de paiement MonCash
+    const paymentToken = data.clientSecret; 
+    const moncashUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Checkout/Token?PaymentToken=${paymentToken}`;
+    
     window.location.href = moncashUrl;
 }
 
