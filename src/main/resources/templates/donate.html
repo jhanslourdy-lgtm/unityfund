@@ -328,37 +328,19 @@
                         
                         window.location.href = '/donation/success?transactionId=' + data.transactionId;
                     }
-                } else if (method === 'MONCASH') {
-                    const paymentToken = data.clientSecret;
-                    
-                    if (paymentToken) {
-                        // Construire l'URL de redirection MonCash
-                        let moncashUrl;
-                        if (paymentToken.startsWith('http')) {
-                            moncashUrl = paymentToken;
-                        } else {
-                            moncashUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Checkout/Token?PaymentToken=${paymentToken}`;
-                        }
-                        
-                        btnText.textContent = 'Redirection vers MonCash...';
-                        
-                        // Redirection après un court délai
-                        setTimeout(() => {
-                            window.location.href = moncashUrl;
-                        }, 1000);
-                    } else {
-                        // Mode fallback si MonCash n'est pas configuré
-                        console.warn('MonCash: token non reçu, utilisation du mode fallback');
-                        
-                        await fetch('/api/payments/confirm', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ transactionId: data.transactionId })
-                        });
-                        
-                        window.location.href = '/donation/success?transactionId=' + data.transactionId;
-                    }
-                }
+                } 
+                // Remplacez votre bloc MonCash actuel par celui-ci :
+} else if (method === 'MONCASH') {
+    const paymentToken = data.clientSecret; // C'est le token renvoyé par votre backend
+    
+    if (paymentToken) {
+        // L'URL correcte pour la redirection Sandbox MonCash
+        const moncashUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Token?paymentToken=${paymentToken}`;
+        
+        btnText.textContent = 'Redirection vers MonCash...';
+        window.location.href = moncashUrl;
+    }
+}
 
             } catch (err) {
                 console.error('Erreur paiement:', err);
