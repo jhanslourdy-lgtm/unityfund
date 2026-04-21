@@ -30,16 +30,26 @@
             color: white;
             border-color: #10b77f;
         }
+
+        /* ── FIX STRIPE : forcer la visibilité du conteneur card ── */
         #card-element {
-            padding: 12px;
+            padding: 12px 16px;
             border: 1px solid #e2e8f0;
             border-radius: 0.5rem;
             background: white;
+            min-height: 46px;
         }
         .dark #card-element {
             background: #1e293b;
             border-color: #334155;
         }
+        /* iframe injecté par Stripe doit être visible */
+        #card-element iframe {
+            display: block !important;
+            width: 100% !important;
+            min-height: 40px !important;
+        }
+
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #10b77f;
@@ -53,7 +63,7 @@
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark min-h-screen font-display text-slate-900 dark:text-slate-100">
-    
+
     <div class="max-w-5xl mx-auto px-4 py-8">
         <a th:href="@{/campaign/details/{id}(id=${campaign.id})}" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-primary mb-8 transition-colors">
             <span class="material-symbols-outlined text-sm">arrow_back</span>
@@ -61,22 +71,30 @@
         </a>
 
         <div class="grid lg:grid-cols-5 gap-8">
+
+            <!-- ── Formulaire ── -->
             <div class="lg:col-span-3">
                 <h1 class="text-3xl font-bold mb-2">Faire un don</h1>
-                <p class="text-slate-500 mb-8">Soutenez <span th:text="${campaign.user != null} ? ${campaign.user.firstName} : 'ce créateur'" class="font-semibold text-slate-700">le créateur</span>.</p>
+                <p class="text-slate-500 mb-8">
+                    Soutenez <span th:text="${campaign.user != null} ? ${campaign.user.firstName} : 'ce créateur'"
+                                   class="font-semibold text-slate-700 dark:text-slate-200">le créateur</span>.
+                </p>
 
-                <form id="donation-form" class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 space-y-6">
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 space-y-6">
+
+                    <!-- Montants -->
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Choisissez un montant (USD)</label>
                         <div class="grid grid-cols-3 gap-3 mb-3">
-                            <button type="button" onclick="selectAmount(10)" class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">10 $</button>
-                            <button type="button" onclick="selectAmount(25)" class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">25 $</button>
-                            <button type="button" onclick="selectAmount(50)" class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">50 $</button>
+                            <button type="button" onclick="selectAmount(10)"  class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">10 $</button>
+                            <button type="button" onclick="selectAmount(25)"  class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">25 $</button>
+                            <button type="button" onclick="selectAmount(50)"  class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">50 $</button>
                             <button type="button" onclick="selectAmount(100)" class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">100 $</button>
                             <button type="button" onclick="selectAmount(200)" class="amount-btn py-3 rounded-lg border border-slate-200 dark:border-slate-700 font-bold hover:border-primary transition-all bg-white dark:bg-slate-800">200 $</button>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">edit</span>
-                                <input type="number" id="custom-amount" oninput="customAmount(this.value)" placeholder="Autre" min="1" step="0.01"
+                                <input type="number" id="custom-amount" oninput="customAmount(this.value)"
+                                       placeholder="Autre" min="1" step="0.01"
                                        class="w-full pl-9 pr-3 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none font-bold"/>
                             </div>
                         </div>
@@ -84,88 +102,140 @@
                         <p id="amount-error" class="text-xs text-red-500 hidden">Veuillez sélectionner un montant minimum de 1 $</p>
                     </div>
 
+                    <!-- Message -->
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Message de soutien (optionnel)</label>
-                        <textarea id="message" rows="3" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none resize-none" placeholder="Laissez un mot d'encouragement..."></textarea>
+                        <textarea id="message" rows="3"
+                                  class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none resize-none"
+                                  placeholder="Laissez un mot d'encouragement..."></textarea>
                     </div>
 
+                    <!-- Anonyme -->
                     <div class="flex items-center gap-3">
                         <input type="checkbox" id="anonymous" class="size-4 rounded border-slate-300 text-primary focus:ring-primary"/>
                         <label for="anonymous" class="text-sm text-slate-600 dark:text-slate-400">Faire ce don anonymement</label>
                     </div>
 
+                    <!-- Méthode de paiement -->
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de paiement</label>
                         <div class="flex gap-3">
+                            <!-- Stripe -->
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="method" value="STRIPE" checked onchange="toggleMethod('STRIPE')" class="peer hidden"/>
-                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all h-full">
-                                    <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">credit_card</span>
+                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all h-full flex flex-col items-center justify-center gap-1">
+                                    <span class="material-symbols-outlined text-2xl text-slate-400 peer-checked:text-primary">credit_card</span>
                                     <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Carte bancaire</p>
+                                    <p class="text-xs text-slate-400">Visa, Mastercard</p>
                                 </div>
                             </label>
+                            <!-- MonCash -->
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="method" value="MONCASH" onchange="toggleMethod('MONCASH')" class="peer hidden"/>
-                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all h-full flex flex-col items-center justify-center">
-                                    <img th:src="@{/images/cash.png}" alt="Pay with MonCash" class="h-8 object-contain mb-1">
+                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all h-full flex flex-col items-center justify-center gap-1">
+                                    <img th:src="@{/images/cash.png}" alt="MonCash" class="h-8 object-contain"/>
                                     <p class="text-xs text-slate-400">Digicel Haïti</p>
                                 </div>
                             </label>
                         </div>
                     </div>
 
+                    <!-- Section Stripe -->
                     <div id="stripe-section">
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Informations de carte</label>
-                        <div id="card-element" class="dark:bg-slate-800 dark:border-slate-700"></div>
+                        <!--
+                            FIX STRIPE : div avec dimensions explicites pour que l'iframe
+                            Stripe puisse se monter correctement dans tous les navigateurs.
+                        -->
+                        <div id="card-element" style="min-height:46px;"></div>
                         <div id="card-errors" class="text-xs text-red-500 mt-2"></div>
                     </div>
 
+                    <!-- Section MonCash -->
                     <div id="moncash-section" class="hidden p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                         <div class="flex items-start gap-3">
-                            <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
-                            <p class="text-xs text-amber-700 dark:text-amber-300">Vous serez redirigé vers l'interface sécurisée de MonCash pour finaliser la transaction.</p>
+                            <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 mt-0.5">info</span>
+                            <p class="text-xs text-amber-700 dark:text-amber-300">
+                                Vous serez redirigé vers l'interface sécurisée de MonCash (Digicel Haïti) pour finaliser la transaction.
+                            </p>
                         </div>
                     </div>
 
+                    <!-- Erreur globale -->
                     <div id="global-error" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
 
-                    <button type="submit" id="submit-btn" class="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                    <!-- Bouton -->
+                    <button type="button" id="submit-btn"
+                            onclick="submitDonation()"
+                            class="w-full py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
                         <span id="btn-text">Confirmer le don</span>
                         <span id="btn-spinner" class="spinner hidden"></span>
                     </button>
-                </form>
+                </div>
             </div>
 
+            <!-- ── Résumé ── -->
             <div class="lg:col-span-2">
                 <div class="sticky top-8 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-6">
                     <div class="aspect-video rounded-lg overflow-hidden mb-4 bg-slate-200">
                         <img th:if="${campaign.imageUrl != null}" th:src="${campaign.imageUrl}" class="w-full h-full object-cover"/>
                     </div>
-                    <h3 th:text="${campaign.title}" class="font-bold text-lg mb-2">Titre</h3>
-                    <div class="border-t border-slate-100 dark:border-slate-800 pt-4">
-                        <div class="flex justify-between text-sm font-semibold">
-                            <span>Votre don</span>
-                            <span id="summary-amount" class="text-primary">0 $</span>
+                    <h3 th:text="${campaign.title}" class="font-bold text-lg mb-4">Titre</h3>
+
+                    <div class="space-y-2 text-sm border-t border-slate-100 dark:border-slate-800 pt-4">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Votre don</span>
+                            <span id="summary-amount" class="font-semibold text-primary">0 $</span>
                         </div>
-                        <div class="flex justify-between text-sm font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                            <span>Total à payer</span>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Frais plateforme (5%)</span>
+                            <span id="summary-fee" class="text-slate-500">0 $</span>
+                        </div>
+                        <div class="flex justify-between font-bold pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <span>Total</span>
                             <span id="summary-total" class="text-slate-900 dark:text-white">0 $</span>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
     <script th:inline="javascript">
-        const campaignId = [[${campaign.id}]];
-        const stripePublicKey = [[${stripePublicKey}]];
-        
+        const campaignId     = /*[[${campaign.id}]]*/ 0;
+        const stripePublicKey = /*[[${stripePublicKey}]]*/ '';
+
+        // ── Initialisation Stripe ────────────────────────────────────────────
+        // FIX STRIPE : on crée les Elements avec des options de style explicites
+        // pour éviter que l'iframe reste invisible dans certains navigateurs.
         const stripe = Stripe(stripePublicKey);
         const elements = stripe.elements();
-        const cardElement = elements.create('card');
-        cardElement.mount('#card-element');
+        const cardElement = elements.create('card', {
+            hidePostalCode: false,
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#0f172a',
+                    fontFamily: 'Inter, sans-serif',
+                    '::placeholder': { color: '#94a3b8' },
+                    lineHeight: '1.5',
+                },
+                invalid: { color: '#ef4444' },
+            }
+        });
 
+        // On monte l'élément après que le DOM soit prêt
+        document.addEventListener('DOMContentLoaded', function () {
+            cardElement.mount('#card-element');
+
+            cardElement.on('change', function (event) {
+                const display = document.getElementById('card-errors');
+                display.textContent = event.error ? event.error.message : '';
+            });
+        });
+
+        // ── Montant ──────────────────────────────────────────────────────────
         let selectedAmountValue = 0;
 
         function selectAmount(amount) {
@@ -173,7 +243,7 @@
             document.getElementById('amount').value = amount;
             document.getElementById('custom-amount').value = '';
             document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
-            event.target.classList.add('selected');
+            event.currentTarget.classList.add('selected');
             updateSummary();
         }
 
@@ -185,65 +255,107 @@
         }
 
         function updateSummary() {
+            const fee   = selectedAmountValue * 0.05;
+            const total = selectedAmountValue + fee;
             document.getElementById('summary-amount').textContent = selectedAmountValue.toFixed(2) + ' $';
-            document.getElementById('summary-total').textContent = selectedAmountValue.toFixed(2) + ' $';
+            document.getElementById('summary-fee').textContent    = fee.toFixed(2) + ' $';
+            document.getElementById('summary-total').textContent  = total.toFixed(2) + ' $';
         }
 
+        // ── Méthode ──────────────────────────────────────────────────────────
         function toggleMethod(method) {
             document.getElementById('stripe-section').classList.toggle('hidden', method !== 'STRIPE');
             document.getElementById('moncash-section').classList.toggle('hidden', method !== 'MONCASH');
         }
 
-        document.getElementById('donation-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // ── Soumission ───────────────────────────────────────────────────────
+        async function submitDonation() {
             const method = document.querySelector('input[name="method"]:checked').value;
             const amount = parseFloat(document.getElementById('amount').value);
-            
+
+            // Validation montant
             if (!amount || amount < 1) {
                 document.getElementById('amount-error').classList.remove('hidden');
                 return;
             }
+            document.getElementById('amount-error').classList.add('hidden');
 
+            // Désactiver le bouton
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.disabled = true;
             document.getElementById('btn-spinner').classList.remove('hidden');
+            document.getElementById('btn-text').textContent = 'Traitement...';
+            document.getElementById('global-error').classList.add('hidden');
 
             try {
+                // 1. Créer l'intent côté serveur
                 const response = await fetch('/api/payments/create-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         campaignId: campaignId,
-                        amount: amount,
-                        method: method,
-                        message: document.getElementById('message').value,
-                        anonymous: document.getElementById('anonymous').checked
+                        amount:     amount,
+                        method:     method,
+                        message:    document.getElementById('message').value,
+                        anonymous:  document.getElementById('anonymous').checked
                     })
                 });
 
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Erreur serveur');
+                }
+
                 const data = await response.json();
 
+                // 2. Traitement selon la méthode
                 if (method === 'STRIPE') {
-                    const { paymentIntent, error } = await stripe.confirmCardPayment(data.clientSecret, {
+                    // FIX STRIPE : utiliser confirmCardPayment avec allow_redirects: never
+                    // pour rester en mode test sans redirection 3D-Secure
+                    const result = await stripe.confirmCardPayment(data.clientSecret, {
                         payment_method: { card: cardElement }
                     });
-                    if (paymentIntent.status === 'succeeded') {
+
+                    if (result.error) {
+                        throw new Error(result.error.message);
+                    }
+
+                    if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
                         window.location.href = '/donation/success?transactionId=' + data.transactionId;
+                    } else {
+                        throw new Error('Paiement non finalisé. Statut : ' + (result.paymentIntent?.status || 'inconnu'));
                     }
+
                 } else if (method === 'MONCASH') {
-                    // CORRECTION DE L'URL SANDBOX ICI
-                    const paymentToken = data.clientSecret;
-                    if (paymentToken) {
-                        window.location.href = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Token?paymentToken=${paymentToken}`;
+                    /*
+                     * FIX MONCASH :
+                     * Le backend (MonCashPaymentProvider) retourne déjà l'URL de redirection
+                     * complète dans data.clientSecret  →  "https://sandbox.moncashbutton...
+                     * /Moncash-business/Payment/Redirect?token=<token>"
+                     *
+                     * On redirige directement vers cette URL, sans reconstruire quoi que ce soit.
+                     */
+                    const redirectUrl = data.clientSecret;
+
+                    if (!redirectUrl || !redirectUrl.startsWith('http')) {
+                        throw new Error('URL de redirection MonCash invalide : ' + redirectUrl);
                     }
+
+                    console.log('Redirection MonCash vers :', redirectUrl);
+                    window.location.href = redirectUrl;
                 }
+
             } catch (err) {
-                document.getElementById('global-error').textContent = "Erreur de traitement";
-                document.getElementById('global-error').classList.remove('hidden');
+                console.error('Erreur paiement :', err);
+                const errDiv = document.getElementById('global-error');
+                errDiv.textContent = err.message || 'Une erreur est survenue. Veuillez réessayer.';
+                errDiv.classList.remove('hidden');
+
                 submitBtn.disabled = false;
                 document.getElementById('btn-spinner').classList.add('hidden');
+                document.getElementById('btn-text').textContent = 'Confirmer le don';
             }
-        });
+        }
     </script>
 </body>
 </html>
