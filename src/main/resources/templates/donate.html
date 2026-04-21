@@ -103,25 +103,41 @@
                     </div>
 
                     <!-- Méthode de paiement -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de paiement</label>
-                        <div class="flex gap-3">
-                            <label class="flex-1 cursor-pointer">
-                                <input type="radio" name="method" value="STRIPE" checked onchange="toggleMethod('STRIPE')" class="peer hidden"/>
-                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
-                                    <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">credit_card</span>
-                                    <p class="text-sm font-bold">Carte bancaire</p>
-                                </div>
-                            </label>
-                            <label class="flex-1 cursor-pointer">
-                                <input type="radio" name="method" value="MONCASH" onchange="toggleMethod('MONCASH')" class="peer hidden"/>
-                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
-                                    <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">phone_iphone</span>
-                                    <p class="text-sm font-bold">MonCash</p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+                    <!-- REMPLACE cette section dans donate.html -->
+<div>
+    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de paiement</label>
+    <div class="flex gap-3">
+        <!-- Stripe -->
+        <label class="flex-1 cursor-pointer">
+            <input type="radio" name="method" value="STRIPE" checked onchange="toggleMethod('STRIPE')" class="peer hidden"/>
+            <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all hover:border-slate-300">
+                <!-- Logo Stripe SVG -->
+                <svg class="w-8 h-8 mx-auto mb-2" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#635BFF" d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.02 1.26-.06 1.48zm-6.1-5.63c-1.07 0-2.02.87-2.14 2.62h4.22c-.05-1.6-.87-2.62-2.08-2.62z"/>
+                    <path fill="#635BFF" d="M40.95 20.3V6.84h4.14v1.14c.87-.75 2.21-1.48 3.85-1.48.45 0 .87.06 1.22.17v4.22c-.45-.13-.97-.19-1.55-.19-1.52 0-2.78.68-3.52 1.48v8.12h-4.14z"/>
+                    <path fill="#635BFF" d="M32.25 6.13c1.64 0 2.81.35 3.52.73v3.65c-.75-.37-1.78-.71-3.2-.71-1.14 0-1.78.45-1.78 1.14 0 .71.52 1.07 1.97 1.52 2.46.75 3.65 1.93 3.65 4.1 0 2.84-2.08 4.69-5.38 4.69-1.55 0-2.93-.35-3.84-.84v-3.84c.91.56 2.16.97 3.6.97 1.14 0 1.78-.39 1.78-1.14 0-.68-.49-1.04-1.84-1.48-2.52-.78-3.78-1.97-3.78-4.14 0-2.71 2.02-4.69 5.3-4.69z"/>
+                    <path fill="#635BFF" d="M21.24 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.02 1.26-.06 1.48zm-6.1-5.63c-1.07 0-2.02.87-2.14 2.62h4.22c-.05-1.6-.87-2.62-2.08-2.62z"/>
+                    <path fill="#635BFF" d="M4.8 20.3H.66V6.84H4.8v1.14c.87-.75 2.21-1.48 3.85-1.48.45 0 .87.06 1.22.17v4.22c-.45-.13-.97-.19-1.55-.19-1.52 0-2.78.68-3.52 1.48v8.12z"/>
+                </svg>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Carte bancaire</p>
+                <p class="text-xs text-slate-400 mt-1">Visa, Mastercard, etc.</p>
+            </div>
+        </label>
+        
+        <!-- MonCash -->
+        <label class="flex-1 cursor-pointer">
+            <input type="radio" name="method" value="MONCASH" onchange="toggleMethod('MONCASH')" class="peer hidden"/>
+            <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all hover:border-slate-300">
+                <!-- Logo MonCash SVG stylisé -->
+                <div class="w-8 h-8 mx-auto mb-2 bg-gradient-to-br from-[#D8000C] to-[#FF6B35] rounded-lg flex items-center justify-center">
+                    <span class="text-white font-black text-xs">M</span>
+                </div>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">MonCash</p>
+                <p class="text-xs text-slate-400 mt-1">Digicel Haïti</p>
+            </div>
+        </label>
+    </div>
+</div>
 
                     <!-- Stripe Card Element -->
                     <div id="stripe-section">
@@ -313,10 +329,19 @@
     
     window.location.href = '/donation/success?transactionId=' + data.transactionId;
 }
-                }else if (method === 'MONCASH') {
-    // Le 'clientSecret' renvoyé par votre API contient ici le TOKEN de paiement MonCash
-    const paymentToken = data.clientSecret; 
-    const moncashUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Checkout/Token?PaymentToken=${paymentToken}`;
+                } else if (method === 'MONCASH') {
+    // Le 'clientSecret' contient maintenant le PaymentToken ou l'URL complète
+    const paymentToken = data.clientSecret;
+    
+    // Si c'est une URL complète, extraire le token
+    let moncashUrl;
+    if (paymentToken.startsWith('http')) {
+        // C'est déjà une URL complète (fallback)
+        moncashUrl = paymentToken;
+    } else {
+        // C'est un PaymentToken, construire l'URL
+        moncashUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Checkout/Token?PaymentToken=${paymentToken}`;
+    }
     
     window.location.href = moncashUrl;
 }
