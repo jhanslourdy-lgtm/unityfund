@@ -22,17 +22,18 @@ public class MonCashPaymentProvider {
     @Value("${moncash.client.secret:}")
     private String moncashSecret;
     
-    // URLs officielles MonCash Sandbox
-    private static final String SANDBOX_BASE_URL = "https://sandbox.moncashbutton.digicelgroup.com";
-    private static final String TOKEN_ENDPOINT = "/oauth/token";
-    private static final String CREATE_PAYMENT_ENDPOINT = "/Api/v1/CreatePayment";
-    private static final String RETRIEVE_PAYMENT_ENDPOINT = "/Api/v1/RetrieveTransactionPayment";
+    // URL de base CORRIGÉE avec le contexte Moncash-business
+    private static final String SANDBOX_BASE_URL = "https://sandbox.moncashbutton.digicelgroup.com/Moncash-business";
     
     /**
      * Récupère un token d'accès OAuth2 MonCash
      */
     private String getAccessToken() {
-        String tokenUrl = SANDBOX_BASE_URL + TOKEN_ENDPOINT;
+        // URL complète: https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/oauth/token
+        String tokenUrl = SANDBOX_BASE_URL + "/oauth/token";
+        
+        System.out.println("MonCash Debug - URL token: " + tokenUrl);
+        System.out.println("MonCash Debug - Client ID: " + moncashClientId.substring(0, Math.min(10, moncashClientId.length())) + "...");
         
         // Header Authorization: Basic base64(client_id:client_secret)
         String credentials = moncashClientId + ":" + moncashSecret;
@@ -58,10 +59,11 @@ public class MonCashPaymentProvider {
                     throw new RuntimeException("Token d'accès vide dans la réponse");
                 }
                 
+                System.out.println("MonCash Debug - Token obtenu avec succès");
                 return accessToken;
             }
         } catch (Exception e) {
-            System.err.println("Erreur auth MonCash: " + e.getMessage());
+            System.err.println("MonCash Debug - Erreur complète: " + e.getMessage());
             throw new RuntimeException("Erreur authentification MonCash: " + e.getMessage());
         }
         
@@ -72,7 +74,10 @@ public class MonCashPaymentProvider {
         String orderId = "UNITY-" + System.currentTimeMillis();
         String accessToken = getAccessToken();
         
-        String createUrl = SANDBOX_BASE_URL + CREATE_PAYMENT_ENDPOINT;
+        // URL complète: https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Api/v1/CreatePayment
+        String createUrl = SANDBOX_BASE_URL + "/Api/v1/CreatePayment";
+        
+        System.out.println("MonCash Debug - URL create: " + createUrl);
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -95,6 +100,7 @@ public class MonCashPaymentProvider {
                 return new PaymentIntent(token, payment.getTransactionId(), responseBody.toString());
             }
         } catch (Exception e) {
+            System.err.println("MonCash Debug - Erreur création: " + e.getMessage());
             throw new RuntimeException("Erreur création paiement MonCash: " + e.getMessage());
         }
         
@@ -119,7 +125,7 @@ public class MonCashPaymentProvider {
     public boolean verifyPayment(String orderId) {
         try {
             String accessToken = getAccessToken();
-            String verifyUrl = SANDBOX_BASE_URL + RETRIEVE_PAYMENT_ENDPOINT + "?orderId=" + orderId;
+            String verifyUrl = SANDBOX_BASE_URL + "/Api/v1/RetrieveTransactionPayment?orderId=" + orderId;
             
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);
