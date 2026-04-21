@@ -113,23 +113,8 @@
     <version>0.11.5</version>
     <scope>runtime</scope>
 </dependency>
- <dependency>
-        <groupId>com.digicelgroup.moncash</groupId>
-        <artifactId>sdk-moncash-api</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </dependency>
 	</dependencies>
-        <repositories>
-    <repository>
-        <id>Moncash-sdk-java</id>
-        <url>https://github.com/ecelestin/Moncash-sdk-java</url>
-        <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-        </snapshots>
-    </repository>
-</repositories>
-
+        
 	<build>
 		<plugins>
 			<plugin>
