@@ -24,12 +24,47 @@ public class MonCashPaymentProvider {
     @Value("${moncash.client.secret:}")
     private String moncashSecret;
     
+    /**
+     * Récupère un token d'accès OAuth2 MonCash
+     */
+    private String getAccessToken() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        
+        // MonCash utilise grant_type=client_credentials dans le body
+        String body = "grant_type=client_credentials&client_id=" + moncashClientId 
+                    + "&client_secret=" + moncashSecret;
+        
+        HttpEntity<String> request = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                apiUrl + "/oauth/token", 
+                request, 
+                Map.class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseBody = response.getBody();
+                return (String) responseBody.get("access_token");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur authentification MonCash: " + e.getMessage());
+        }
+        throw new RuntimeException("Impossible d'obtenir le token MonCash");
+    }
+    
     public PaymentIntent createIntent(Payment payment, Campaign campaign, User donor) {
         String orderId = "UNITY-" + System.currentTimeMillis();
         
+        // 1. Récupérer le token OAuth2
+        String accessToken = getAccessToken();
+        
+        // 2. Créer le paiement avec le Bearer token
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(moncashClientId, moncashSecret);
+        headers.setBearerAuth(accessToken); // Authorization: Bearer <token>
         
         Map<String, Object> body = new HashMap<>();
         body.put("amount", payment.getAmount().toString());
@@ -63,18 +98,20 @@ public class MonCashPaymentProvider {
     }
     
     /**
-     * Vérifie le statut d'un paiement MonCash (optionnel mais recommandé)
+     * Vérifie le statut d'un paiement MonCash
      */
     public boolean verifyPayment(String orderId) {
         try {
+            String accessToken = getAccessToken();
+            
             HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(moncashClientId, moncashSecret);
+            headers.setBearerAuth(accessToken);
             HttpEntity<String> request = new HttpEntity<>(headers);
             
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<Map> response = restTemplate.exchange(
                 apiUrl + "/Api/v1/RetrieveTransactionPayment?orderId=" + orderId,
-                org.springframework.http.HttpMethod.GET,
+                HttpMethod.GET,
                 request,
                 Map.class
             );
