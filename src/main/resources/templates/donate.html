@@ -314,10 +314,11 @@
     window.location.href = '/donation/success?transactionId=' + data.transactionId;
 }
                 } else if (method === 'MONCASH') {
-                    // Redirection MonCash (token = clientSecret dans notre implémentation)
-                    alert('Redirection vers MonCash... (Token: ' + data.clientSecret + ')');
-                    // window.location.href = 'https://moncash.../payment/' + data.clientSecret;
-                }
+    // Redirection vers le portail de paiement MonCash Sandbox
+    const moncashUrl = 'https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=' 
+        + encodeURIComponent(data.clientSecret);
+    window.location.href = moncashUrl;
+}
 
             } catch (err) {
                 globalError.textContent = err.message || 'Une erreur est survenue';

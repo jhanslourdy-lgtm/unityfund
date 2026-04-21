@@ -41,7 +41,7 @@ public class MonCashPaymentProvider {
         
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                apiUrl + "/api/v1/CreatePayment", 
+                apiUrl + "/Api/v1/CreatePayment", 
                 request, 
                 Map.class
             );
@@ -60,5 +60,32 @@ public class MonCashPaymentProvider {
         }
         
         throw new RuntimeException("Impossible de créer le paiement MonCash");
+    }
+    
+    /**
+     * Vérifie le statut d'un paiement MonCash (optionnel mais recommandé)
+     */
+    public boolean verifyPayment(String orderId) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(moncashClientId, moncashSecret);
+            HttpEntity<String> request = new HttpEntity<>(headers);
+            
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> response = restTemplate.exchange(
+                apiUrl + "/Api/v1/RetrieveTransactionPayment?orderId=" + orderId,
+                org.springframework.http.HttpMethod.GET,
+                request,
+                Map.class
+            );
+            
+            if (response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                return body.containsKey("status") && "SUCCESS".equals(body.get("status"));
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur vérification MonCash: " + e.getMessage());
+        }
+        return false;
     }
 }
