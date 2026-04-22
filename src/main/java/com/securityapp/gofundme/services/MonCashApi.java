@@ -1,13 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.securityapp.gofundme.services;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.nimbusds.jose.shaded.gson.JsonObject;
-import com.nimbusds.jose.shaded.gson.JsonParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,10 +19,10 @@ public class MonCashApi {
 
     private static final HttpClient client = HttpClient.newHttpClient();
 
-    @Value("${moncash.client.id}")
+    @Value("${moncash.client.id:}")
     private String clientId;
 
-    @Value("${moncash.client.secret}")
+    @Value("${moncash.client.secret:}")
     private String clientSecret;
 
     @Value("${moncash.base.url:https://sandbox.moncashbutton.digicelgroup.com/Api}")
@@ -51,17 +45,19 @@ public class MonCashApi {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+        
+        // Utilisation explicite de com.google.gson.JsonParser
+        com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
         return json.get("access_token").getAsString();
     }
 
     /**
      * Crée un paiement MonCash
      */
-    public JsonObject createPayment(String orderId, double amount) throws Exception {
+    public com.google.gson.JsonObject createPayment(String orderId, double amount) throws Exception {
         String token = getAccessToken();
 
-        JsonObject data = new JsonObject();
+        com.google.gson.JsonObject data = new com.google.gson.JsonObject();
         data.addProperty("amount", amount);
         data.addProperty("orderId", orderId);
 
@@ -74,16 +70,16 @@ public class MonCashApi {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        return JsonParser.parseString(response.body()).getAsJsonObject();
+        return com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
     }
 
     /**
      * Vérifie une transaction MonCash (CRITIQUE pour la sécurité)
      */
-    public JsonObject retrieveTransactionPayment(String transactionId) throws Exception {
+    public com.google.gson.JsonObject retrieveTransactionPayment(String transactionId) throws Exception {
         String token = getAccessToken();
 
-        JsonObject data = new JsonObject();
+        com.google.gson.JsonObject data = new com.google.gson.JsonObject();
         data.addProperty("transactionId", transactionId);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -95,7 +91,7 @@ public class MonCashApi {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        return JsonParser.parseString(response.body()).getAsJsonObject();
+        return com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
     }
 
     /**

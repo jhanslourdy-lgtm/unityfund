@@ -119,7 +119,6 @@
 package com.securityapp.gofundme.services;
 
 import com.google.gson.JsonObject;
-import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.securityapp.gofundme.dto.DonationRequest;
 import com.securityapp.gofundme.dto.PaymentIntent;
 import com.securityapp.gofundme.model.*;
@@ -169,7 +168,6 @@ public class PaymentService {
             .orElseThrow(() -> new RuntimeException("Campagne non trouvée"));
         
         if (request.getMethod() == PaymentMethod.MONCASH) {
-            // ⭐ COMME DANS GRAND HOTEL : Stocker en session
             String orderId = moncashApi.generateOrderId();
             
             session.setAttribute("pending_payment_orderId", orderId);
@@ -180,16 +178,12 @@ public class PaymentService {
             session.setAttribute("pending_payment_anonymous", request.isAnonymous());
             
             System.out.println("Session stockée - OrderId: " + orderId);
-            System.out.println("CampaignId: " + campaign.getId());
-            System.out.println("Amount: " + request.getAmount());
             
-            // ⭐ Appeler l'API MonCash (comme dans PaymentInitiateServlet)
-            JsonObject paymentResponse = moncashApi.createPayment(orderId, request.getAmount().doubleValue());
+            com.google.gson.JsonObject paymentResponse = moncashApi.createPayment(orderId, request.getAmount().doubleValue());
             
-            // Extraire le token de paiement
             String paymentToken = null;
             if (paymentResponse.has("payment_token")) {
-                JsonObject paymentTokenObj = paymentResponse.getAsJsonObject("payment_token");
+                com.google.gson.JsonObject paymentTokenObj = paymentResponse.getAsJsonObject("payment_token");
                 if (paymentTokenObj.has("token")) {
                     paymentToken = paymentTokenObj.get("token").getAsString();
                 }
@@ -204,8 +198,6 @@ public class PaymentService {
             }
             
             String redirectUrl = MONCASH_REDIRECT_BASE + paymentToken;
-            System.out.println("Redirect URL: " + redirectUrl);
-            
             return new PaymentIntent(redirectUrl, orderId, paymentResponse.toString());
             
         } else {
@@ -233,15 +225,11 @@ public class PaymentService {
         }
     }
     
-    /**
-     * ⭐ Vérification et confirmation MonCash (comme dans payment-successs.jsp)
-     */
     @Transactional
     public boolean verifyAndConfirmMonCash(String transactionId, HttpSession session) {
         System.out.println("=== VÉRIFICATION MONCASH ===");
         System.out.println("TransactionId reçu: " + transactionId);
         
-        // Récupérer les données de session
         String sessionOrderId = (String) session.getAttribute("pending_payment_orderId");
         Long campaignId = (Long) session.getAttribute("pending_payment_campaignId");
         Double sessionAmount = (Double) session.getAttribute("pending_payment_amount");
@@ -250,8 +238,6 @@ public class PaymentService {
         Boolean anonymous = (Boolean) session.getAttribute("pending_payment_anonymous");
         
         System.out.println("Session OrderId: " + sessionOrderId);
-        System.out.println("Session CampaignId: " + campaignId);
-        System.out.println("Session Amount: " + sessionAmount);
         
         if (sessionOrderId == null || campaignId == null) {
             System.err.println("Session expirée ou invalide");
@@ -259,21 +245,17 @@ public class PaymentService {
         }
         
         try {
-            // ⭐ VÉRIFICATION SERVEUR-À-SERVEUR (comme dans Grand Hotel)
-            JsonObject paymentDetails = moncashApi.retrieveTransactionPayment(transactionId);
+            com.google.gson.JsonObject paymentDetails = moncashApi.retrieveTransactionPayment(transactionId);
             
             int status = paymentDetails.get("status").getAsInt();
-            JsonObject payment = paymentDetails.getAsJsonObject("payment");
+            com.google.gson.JsonObject payment = paymentDetails.getAsJsonObject("payment");
             String moncashMessage = payment.get("message").getAsString();
             String moncashOrderId = payment.get("reference").getAsString();
             double moncashAmount = payment.get("cost").getAsDouble();
             
             System.out.println("MonCash Status: " + status);
-            System.out.println("MonCash Message: " + moncashMessage);
             System.out.println("MonCash OrderId: " + moncashOrderId);
-            System.out.println("MonCash Amount: " + moncashAmount);
             
-            // Vérification de correspondance (comme dans Grand Hotel)
             if (status == 200 && 
                 "successful".equals(moncashMessage) && 
                 moncashOrderId.equals(sessionOrderId) && 
@@ -281,13 +263,11 @@ public class PaymentService {
                 
                 System.out.println("✅ Paiement MonCash vérifié avec succès !");
                 
-                // Mettre à jour la campagne
                 Campaign campaign = campaignRepository.findById(campaignId)
                     .orElseThrow(() -> new RuntimeException("Campagne non trouvée"));
                 
                 User donor = userService.findByEmail(donorEmail);
                 
-                // Créer le don
                 Donation donation = new Donation();
                 donation.setAmount(BigDecimal.valueOf(sessionAmount));
                 donation.setCampaign(campaign);
@@ -295,7 +275,6 @@ public class PaymentService {
                 donation.setMessage(message);
                 donation = donationRepository.save(donation);
                 
-                // Créer le paiement
                 Payment payment = new Payment();
                 payment.setTransactionId(transactionId);
                 payment.setAmount(BigDecimal.valueOf(sessionAmount));
@@ -308,7 +287,6 @@ public class PaymentService {
                 payment.setProviderResponse(paymentDetails.toString());
                 paymentRepository.save(payment);
                 
-                // AUGMENTER LA CAMPAGNE
                 BigDecimal newAmount = campaign.getCurrentAmount().add(BigDecimal.valueOf(sessionAmount));
                 campaign.setCurrentAmount(newAmount);
                 System.out.println("Campagne mise à jour: " + campaign.getCurrentAmount());
@@ -318,7 +296,6 @@ public class PaymentService {
                 }
                 campaignRepository.save(campaign);
                 
-                // Nettoyer la session (comme dans Grand Hotel)
                 session.removeAttribute("pending_payment_orderId");
                 session.removeAttribute("pending_payment_campaignId");
                 session.removeAttribute("pending_payment_amount");
