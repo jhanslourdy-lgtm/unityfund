@@ -119,6 +119,7 @@
 package com.securityapp.gofundme.services;
 
 import com.google.gson.JsonObject;
+import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.securityapp.gofundme.dto.DonationRequest;
 import com.securityapp.gofundme.dto.PaymentIntent;
 import com.securityapp.gofundme.model.*;
