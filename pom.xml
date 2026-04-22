@@ -114,22 +114,18 @@
     <scope>runtime</scope>
 </dependency>
 <dependency>
-        <groupId>com.digicelgroup.moncash</groupId>
-        <artifactId>sdk-moncash-api</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.14</version>
+</dependency>
+	 <dependency>
+	  <groupId>org.netbeans.external</groupId>
+	  <artifactId>com-google-gson</artifactId>
+	  <version>RELEASE113</version>
+	  <type>jar</type>
+	 </dependency>
 	</dependencies>
-        <repositories>
-    <repository>
-        <id>Moncash-sdk-java</id>
-        <url>https://github.com/ecelestin/Moncash-sdk-java</url>
-        <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-        </snapshots>
-    </repository>
-</repositories>
-	<build>
+        	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

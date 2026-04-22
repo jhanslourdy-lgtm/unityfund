@@ -331,7 +331,7 @@
                 // Dans donate.html, remplace la section MonCash par :
 
 } else if (method === 'MONCASH') {
-    const redirectUrl = data.clientSecret; // C'est l'URL complète !
+    const redirectUrl = data.clientSecret; // C'est l'URL complète MonCash
     
     if (redirectUrl && redirectUrl.startsWith('http')) {
         btnText.textContent = 'Redirection vers MonCash...';
@@ -339,7 +339,7 @@
             window.location.href = redirectUrl;
         }, 1000);
     } else {
-        throw new Error('URL MonCash invalide');
+        throw new Error('URL MonCash invalide: ' + redirectUrl);
     }
 }
             } catch (err) {
