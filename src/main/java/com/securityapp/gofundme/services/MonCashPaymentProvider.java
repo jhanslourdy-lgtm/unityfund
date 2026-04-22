@@ -31,7 +31,8 @@ public class MonCashPaymentProvider {
     // URLs MonCash Sandbox
     private static final String AUTH_URL = "https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token";
     private static final String CREATE_PAYMENT_URL = "https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment";
-    private static final String REDIRECT_BASE_URL = "https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Payment/Redirect?token=";
+  private static final String REDIRECT_BASE_URL = 
+    "https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=";
 
     private String cachedToken;
     private long tokenExpiry;

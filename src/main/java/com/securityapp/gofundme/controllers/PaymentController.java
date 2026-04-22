@@ -451,32 +451,38 @@ public class PaymentController {
  * URL: /api/payments/moncash/success?transactionId=xxx
  */
 @GetMapping("/moncash/success")
-public String moncashSuccess(@RequestParam(value = "transactionId", required = false) String transactionId,
-                             HttpSession session,
-                             RedirectAttributes redirectAttributes) {
+public String moncashSuccess(
+        @RequestParam(value = "transactionId", required = false) String transactionId,
+        @RequestParam(value = "orderId", required = false) String orderId,
+        @RequestParam(value = "token", required = false) String token,
+        HttpSession session,
+        RedirectAttributes redirectAttributes) {
+    
     try {
         System.out.println("=== MONCASH SUCCESS CALLBACK ===");
-        System.out.println("TransactionId: " + transactionId);
+        System.out.println("transactionId: " + transactionId);
+        System.out.println("orderId: " + orderId);
+        System.out.println("token: " + token);
         
-        if (transactionId == null || transactionId.isEmpty()) {
-            System.err.println("Aucun transactionId reçu");
+        // MonCash sandbox renvoie parfois "orderId" au lieu de "transactionId"
+        String effectiveId = transactionId != null ? transactionId : 
+                            (orderId != null ? orderId : token);
+        
+        if (effectiveId == null || effectiveId.isEmpty()) {
+            System.err.println("Aucun identifiant reçu");
             return "redirect:/payment/failed";
         }
         
-        // ⭐ Vérifier et confirmer le paiement (comme dans Grand Hotel)
-        boolean verified = paymentService.verifyAndConfirmMonCash(transactionId, session);
+        boolean verified = paymentService.verifyAndConfirmMonCash(effectiveId, session);
         
         if (verified) {
-            redirectAttributes.addFlashAttribute("success", "Paiement confirmé avec succès !");
-            return "redirect:/donation/success?transactionId=" + transactionId;
+            return "redirect:/donation/success?transactionId=" + effectiveId;
         } else {
             return "redirect:/payment/failed";
         }
         
     } catch (Exception e) {
-        System.err.println("Erreur callback MonCash: " + e.getMessage());
-        e.printStackTrace();
+        System.err.println("Erreur callback: " + e.getMessage());
         return "redirect:/payment/failed";
     }
-}
-}
+}}

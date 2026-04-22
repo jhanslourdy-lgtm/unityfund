@@ -158,7 +158,9 @@ public class PaymentService {
     @Value("${platform.fee.percentage:0.05}")
     private BigDecimal platformFeePct;
     
-    private static final String MONCASH_REDIRECT_BASE = "https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Payment/Redirect?token=";
+    // ⭐ CORRECTION : URL de redirection MonCash (middleware, pas business)
+    private static final String MONCASH_REDIRECT_BASE = 
+        "https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=";
     
     @Transactional
     public PaymentIntent createPaymentIntent(DonationRequest request, User donor, HttpSession session) throws Exception {
@@ -170,6 +172,7 @@ public class PaymentService {
         if (request.getMethod() == PaymentMethod.MONCASH) {
             String orderId = moncashApi.generateOrderId();
             
+            // Stockage session (comme dans Grand Hotel)
             session.setAttribute("pending_payment_orderId", orderId);
             session.setAttribute("pending_payment_campaignId", campaign.getId());
             session.setAttribute("pending_payment_amount", request.getAmount().doubleValue());
@@ -179,25 +182,27 @@ public class PaymentService {
             
             System.out.println("Session stockée - OrderId: " + orderId);
             
-            com.google.gson.JsonObject paymentResponse = moncashApi.createPayment(orderId, request.getAmount().doubleValue());
+            JsonObject paymentResponse = moncashApi.createPayment(orderId, request.getAmount().doubleValue());
             
+            // Extraction du token (plusieurs formats possibles)
             String paymentToken = null;
             if (paymentResponse.has("payment_token")) {
-                com.google.gson.JsonObject paymentTokenObj = paymentResponse.getAsJsonObject("payment_token");
+                JsonObject paymentTokenObj = paymentResponse.getAsJsonObject("payment_token");
                 if (paymentTokenObj.has("token")) {
                     paymentToken = paymentTokenObj.get("token").getAsString();
                 }
             }
-            
             if (paymentToken == null && paymentResponse.has("token")) {
                 paymentToken = paymentResponse.get("token").getAsString();
             }
             
             if (paymentToken == null) {
-                throw new RuntimeException("Impossible de créer le paiement MonCash");
+                throw new RuntimeException("Impossible de créer le paiement MonCash - token manquant");
             }
             
             String redirectUrl = MONCASH_REDIRECT_BASE + paymentToken;
+            System.out.println("Redirection MonCash: " + redirectUrl);
+            
             return new PaymentIntent(redirectUrl, orderId, paymentResponse.toString());
             
         } else {
@@ -245,10 +250,11 @@ public class PaymentService {
         }
         
         try {
-            com.google.gson.JsonObject paymentDetails = moncashApi.retrieveTransactionPayment(transactionId);
+            // Vérification serveur-à-serveur avec MonCash
+            JsonObject paymentDetails = moncashApi.retrieveTransactionPayment(transactionId);
             
             int status = paymentDetails.get("status").getAsInt();
-            com.google.gson.JsonObject payment = paymentDetails.getAsJsonObject("payment");
+            JsonObject payment = paymentDetails.getAsJsonObject("payment");
             String moncashMessage = payment.get("message").getAsString();
             String moncashOrderId = payment.get("reference").getAsString();
             double moncashAmount = payment.get("cost").getAsDouble();
@@ -256,6 +262,7 @@ public class PaymentService {
             System.out.println("MonCash Status: " + status);
             System.out.println("MonCash OrderId: " + moncashOrderId);
             
+            // Vérification de sécurité (comme dans Grand Hotel)
             if (status == 200 && 
                 "successful".equals(moncashMessage) && 
                 moncashOrderId.equals(sessionOrderId) && 
@@ -287,15 +294,16 @@ public class PaymentService {
                 payment.setProviderResponse(paymentDetails.toString());
                 paymentRepository.save(payment);
                 
+                // Mise à jour du montant de la campagne
                 BigDecimal newAmount = campaign.getCurrentAmount().add(BigDecimal.valueOf(sessionAmount));
                 campaign.setCurrentAmount(newAmount);
-                System.out.println("Campagne mise à jour: " + campaign.getCurrentAmount());
                 
                 if (campaign.getCurrentAmount().compareTo(campaign.getGoalAmount()) >= 0) {
                     campaign.setStatus(CampaignStatus.COMPLETED);
                 }
                 campaignRepository.save(campaign);
                 
+                // Nettoyage session
                 session.removeAttribute("pending_payment_orderId");
                 session.removeAttribute("pending_payment_campaignId");
                 session.removeAttribute("pending_payment_amount");
