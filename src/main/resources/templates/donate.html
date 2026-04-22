@@ -333,24 +333,11 @@
                         throw new Error('Paiement non finalisé. Statut : ' + (result.paymentIntent?.status || 'inconnu'));
                     }
 
-                } else if (method === 'MONCASH') {
-                    /*
-                     * FIX MONCASH :
-                     * Le backend (MonCashPaymentProvider) retourne déjà l'URL de redirection
-                     * complète dans data.clientSecret  →  "https://sandbox.moncashbutton...
-                     * /Moncash-business/Payment/Redirect?token=<token>"
-                     *
-                     * On redirige directement vers cette URL, sans reconstruire quoi que ce soit.
-                     */
-                    const redirectUrl = data.clientSecret;
-
-                    if (!redirectUrl || !redirectUrl.startsWith('http')) {
-                        throw new Error('URL de redirection MonCash invalide : ' + redirectUrl);
-                    }
-
-                    console.log('Redirection MonCash vers :', redirectUrl);
-                    window.location.href = redirectUrl;
-                }
+                } } else if (method === 'MONCASH') {
+    // ⭐ Redirection directe vers MonCash (comme dans Grand Hotel)
+    console.log('Redirection MonCash vers:', data.clientSecret);
+    window.location.href = data.clientSecret;
+}
 
             } catch (err) {
                 console.error('Erreur paiement :', err);

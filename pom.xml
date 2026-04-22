@@ -113,6 +113,13 @@
     <version>0.11.5</version>
     <scope>runtime</scope>
 </dependency>
+<!-- Gson pour JSON (comme dans Grand Hotel) -->
+<dependency>
+    <groupId>com.google.code.gson</groupId>
+    <artifactId>gson</artifactId>
+    <version>2.10.1</version>
+</dependency>
+
 	</dependencies>
         
 	<build>

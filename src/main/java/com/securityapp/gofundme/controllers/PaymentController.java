@@ -280,6 +280,7 @@ import com.securityapp.gofundme.services.PaymentService;
 import com.securityapp.gofundme.services.StripePaymentProvider;
 import com.securityapp.gofundme.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -291,6 +292,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/api/payments")
@@ -442,22 +444,39 @@ public class PaymentController {
     }
     
     // ─── ENDPOINT DE DEBUG POUR RENDER ────────────────────────────────────────
-    @GetMapping("/debug/check/{transactionId}")
-    @ResponseBody
-    public String debugCheckPayment(@PathVariable String transactionId) {
-        try {
-            var payment = paymentService.findByTransactionId(transactionId);
-            if (payment == null) {
-                return "Transaction non trouvée: " + transactionId;
-            }
-            return "Transaction: " + transactionId + 
-                   "\nStatus: " + payment.getStatus() +
-                   "\nAmount: " + payment.getAmount() +
-                   "\nCampaign current amount: " + 
-                   (payment.getDonation() != null && payment.getDonation().getCampaign() != null ? 
-                    payment.getDonation().getCampaign().getCurrentAmount() : "N/A");
-        } catch (Exception e) {
-            return "Erreur: " + e.getMessage();
+  
+    /**
+ * ⭐ MONCASH SUCCESS CALLBACK (comme payment-successs.jsp)
+ * Redirigé par MonCash après paiement
+ * URL: /api/payments/moncash/success?transactionId=xxx
+ */
+@GetMapping("/moncash/success")
+public String moncashSuccess(@RequestParam(value = "transactionId", required = false) String transactionId,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+    try {
+        System.out.println("=== MONCASH SUCCESS CALLBACK ===");
+        System.out.println("TransactionId: " + transactionId);
+        
+        if (transactionId == null || transactionId.isEmpty()) {
+            System.err.println("Aucun transactionId reçu");
+            return "redirect:/payment/failed";
         }
+        
+        // ⭐ Vérifier et confirmer le paiement (comme dans Grand Hotel)
+        boolean verified = paymentService.verifyAndConfirmMonCash(transactionId, session);
+        
+        if (verified) {
+            redirectAttributes.addFlashAttribute("success", "Paiement confirmé avec succès !");
+            return "redirect:/donation/success?transactionId=" + transactionId;
+        } else {
+            return "redirect:/payment/failed";
+        }
+        
+    } catch (Exception e) {
+        System.err.println("Erreur callback MonCash: " + e.getMessage());
+        e.printStackTrace();
+        return "redirect:/payment/failed";
     }
+}
 }
