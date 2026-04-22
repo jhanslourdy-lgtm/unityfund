@@ -3,6 +3,7 @@ package com.securityapp.gofundme.controllers;
 import com.securityapp.gofundme.dto.DonationRequest;
 import com.securityapp.gofundme.dto.PaymentIntent;
 import com.securityapp.gofundme.model.User;
+import com.securityapp.gofundme.services.MonCashPaymentProvider;
 import com.securityapp.gofundme.services.PaymentService;
 import com.securityapp.gofundme.services.StripePaymentProvider;
 import com.securityapp.gofundme.services.UserService;
@@ -83,7 +84,10 @@ public ResponseEntity<?> confirmPaymentManually(@RequestBody Map<String, String>
         return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }
- @GetMapping("/callback/moncash")
+ @Autowired
+private MonCashPaymentProvider moncashProvider;
+
+@GetMapping("/callback/moncash")
 public String handleMonCashCallback(
         @RequestParam(value = "transactionId", required = false) String transactionId,
         @RequestParam(value = "orderId", required = false) String orderId,
@@ -95,20 +99,19 @@ public String handleMonCashCallback(
         System.out.println("=== MONCASH CALLBACK ===");
         System.out.println("transactionId: " + transactionId);
         System.out.println("orderId: " + orderId);
-        System.out.println("status: " + status);
         
-        // MonCash peut renvoyer orderId ou transactionId
-        String effectiveTransactionId = (transactionId != null) ? transactionId : orderId;
+        String effectiveId = (transactionId != null) ? transactionId : orderId;
         
-        if (effectiveTransactionId == null) {
-            System.err.println("Aucun ID de transaction trouvé");
+        if (effectiveId == null) {
             return "redirect:/payment/failed";
         }
         
-        // Vérifier le statut (en sandbox, on considère le callback comme succès)
-        if ("SUCCESS".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status) || status == null) {
-            paymentService.confirmPayment(effectiveTransactionId, "{\"status\": \"SUCCESS\", \"provider\": \"moncash\"}");
-            return "redirect:/donation/success?transactionId=" + effectiveTransactionId;
+        // VÉRIFICATION RÉELLE via le SDK
+        boolean isValid = moncashProvider.verifyPayment(effectiveId);
+        
+        if (isValid) {
+            paymentService.confirmPayment(effectiveId, "{\"status\": \"SUCCESS\", \"provider\": \"moncash\"}");
+            return "redirect:/donation/success?transactionId=" + effectiveId;
         } else {
             return "redirect:/payment/failed";
         }

@@ -1,20 +1,17 @@
 package com.securityapp.gofundme.services;
 
+import com.digicelgroup.moncash.APIContext;
+import com.digicelgroup.moncash.payments.Payment;
+import com.digicelgroup.moncash.payments.PaymentCapture;
+import com.digicelgroup.moncash.payments.PaymentCreator;
+import com.digicelgroup.moncash.payments.TransactionId;
 import com.securityapp.gofundme.dto.PaymentIntent;
 import com.securityapp.gofundme.model.Campaign;
 import com.securityapp.gofundme.model.Payment;
 import com.securityapp.gofundme.model.User;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class MonCashPaymentProvider {
@@ -25,123 +22,73 @@ public class MonCashPaymentProvider {
     @Value("${moncash.client.secret:}")
     private String moncashSecret;
     
-    @Value("${moncash.base.url:https://sandbox.moncashbutton.digicelgroup.com/Api}")
-    private String baseUrl;
-    
-    private String accessToken;
-    private long tokenExpiry;
-    
     /**
-     * Récupère le token OAuth2
+     * Crée un paiement MonCash via le SDK officiel
+     * Retourne le PaymentIntent avec l'URL de redirection dans clientSecret
      */
-    private String getAccessToken() {
+    public PaymentIntent createIntent(Payment payment, Campaign campaign, User donor) {
         // Vérification des credentials
         if (moncashClientId == null || moncashClientId.isBlank() || 
             moncashSecret == null || moncashSecret.isBlank()) {
-            throw new RuntimeException("MonCash credentials non configurés (moncash.client.id / moncash.client.secret)");
+            throw new RuntimeException("MonCash credentials non configurés");
         }
+
+        // 1. Initialisation du contexte API
+        APIContext apiContext = new APIContext(moncashClientId, moncashSecret);
         
-        // Cache le token 55 minutes
-        if (accessToken != null && System.currentTimeMillis() < tokenExpiry) {
-            return accessToken;
-        }
+        // 2. Création du paiement
+        PaymentCreator paymentCreator = new PaymentCreator();
+        Payment moncashPayment = new Payment();
+        moncashPayment.setOrderId(payment.getTransactionId());
+        moncashPayment.setAmount(payment.getAmount().doubleValue());
         
-        String auth = moncashClientId + ":" + moncashSecret;
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+        // 3. Exécution
+        PaymentCreator creator = paymentCreator.execute(apiContext, PaymentCreator.class, moncashPayment);
         
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Basic " + encodedAuth);
-        headers.set("Accept", "application/json");
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        
-        // Utilisation de MultiValueMap (plus fiable qu'une String brute)
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("scope", "read,write");
-        body.add("grant_type", "client_credentials");
-        
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-        RestTemplate rest = new RestTemplate();
-        
-        try {
-            ResponseEntity<Map> response = rest.postForEntity(baseUrl + "/oauth/token", request, Map.class);
+        // 4. Vérification et récupération de l'URL
+        if (creator.getStatus() != null && 
+            creator.getStatus().compareTo(HttpStatus.SC_ACCEPTED + "") == 0) {
             
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                accessToken = (String) response.getBody().get("access_token");
-                tokenExpiry = System.currentTimeMillis() + 55 * 60 * 1000;
-                return accessToken;
-            } else {
-                throw new RuntimeException("MonCash auth failed: HTTP " + response.getStatusCode());
-            }
-        } catch (Exception e) {
-            System.err.println("MonCash auth error: " + e.getMessage());
-            throw new RuntimeException("Erreur authentification MonCash: " + e.getMessage());
+            // L'URL de checkout est ici !
+            String redirectUrl = creator.redirectUri();
+            
+            return new PaymentIntent(redirectUrl, payment.getTransactionId(), creator.toString());
+            
+        } else if (creator.getStatus() == null) {
+            throw new RuntimeException("MonCash error: " + creator.getError() + " - " + creator.getError_description());
+        } else {
+            throw new RuntimeException("MonCash error: " + creator.getStatus() + " | " + creator.getMessage() + " | " + creator.getPath());
         }
     }
     
-    public PaymentIntent createIntent(Payment payment, Campaign campaign, User donor) {
-        String token = getAccessToken();
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("amount", payment.getAmount().doubleValue());
-        data.put("orderId", payment.getTransactionId());
-        
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Accept", "application/json");
-        
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(data, headers);
-        RestTemplate rest = new RestTemplate();
-        
+    /**
+     * Vérifie une transaction par son ID (utilisé dans le callback)
+     */
+    public boolean verifyPayment(String transactionIdStr) {
         try {
-            ResponseEntity<Map> response = rest.postForEntity(baseUrl + "/v1/CreatePayment", request, Map.class);
+            APIContext apiContext = new APIContext(moncashClientId, moncashSecret);
             
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> resp = response.getBody();
+            PaymentCapture paymentCapture = new PaymentCapture();
+            TransactionId tid = new TransactionId();
+            tid.setTransactionId(transactionIdStr);
+            
+            PaymentCapture capture = paymentCapture.execute(apiContext, PaymentCapture.class, tid);
+            
+            if (capture.getStatus() != null && 
+                capture.getStatus().compareTo(HttpStatus.SC_OK + "") == 0) {
                 
-                String paymentToken = "";
-                if (resp.containsKey("payment_token")) {
-                    Object pt = resp.get("payment_token");
-                    if (pt instanceof Map) {
-                        paymentToken = (String) ((Map<?, ?>) pt).get("token");
-                    }
-                }
-                
-                return new PaymentIntent(paymentToken, payment.getTransactionId(), resp.toString());
-            } else {
-                throw new RuntimeException("MonCash create payment failed: HTTP " + response.getStatusCode());
+                System.out.println("MonCash transaction validée: " + capture.getPayment().getTransaction_id());
+                System.out.println("Payer: " + capture.getPayment().getPayer());
+                System.out.println("Amount: " + capture.getPayment().getCost());
+                return true;
             }
-        } catch (Exception e) {
-            System.err.println("MonCash create error: " + e.getMessage());
-            throw new RuntimeException("Erreur création paiement MonCash: " + e.getMessage());
-        }
-    }
-    
-    public boolean verifyPayment(String transactionId) {
-        try {
-            String token = getAccessToken();
             
-            Map<String, Object> data = new HashMap<>();
-            data.put("transactionId", transactionId);
+            System.err.println("MonCash verification failed: " + capture.getStatus());
+            return false;
             
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Accept", "application/json");
-            
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(data, headers);
-            RestTemplate rest = new RestTemplate();
-            
-            ResponseEntity<Map> response = rest.postForEntity(
-                baseUrl + "/v1/RetrieveTransactionPayment", request, Map.class);
-            
-            if (response.getBody() != null) {
-                Map<String, Object> body = response.getBody();
-                return body.containsKey("status") && "SUCCESS".equals(body.get("status"));
-            }
         } catch (Exception e) {
             System.err.println("Erreur vérification MonCash: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 }

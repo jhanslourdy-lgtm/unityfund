@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/creator/**").permitAll()           // Profil public
                 .requestMatchers("/api/campaigns/*/comments").permitAll() // Lecture commentaires
                 .requestMatchers("/uploads/**").permitAll()           // Images uploadées
+                .requestMatchers("/api/payments/callback/**").permitAll()
                 // Pages protégées
                 .requestMatchers("/profile/settings").authenticated()
                 .requestMatchers("/campaign/create", "/campaign/save", "/campaign/edit/**", "/campaign/update/**", "/campaign/delete/**").authenticated()

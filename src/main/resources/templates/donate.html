@@ -328,38 +328,20 @@
                         
                         window.location.href = '/donation/success?transactionId=' + data.transactionId;
                     }
-                } else if (method === 'MONCASH') {
-                    const paymentToken = data.clientSecret;
-                    
-                    if (paymentToken) {
-                        // Construire l'URL de redirection MonCash
-                        let moncashUrl;
-                        if (paymentToken.startsWith('http')) {
-                            moncashUrl = paymentToken;
-                        } else {
-                            moncashUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-business/Checkout/Token?PaymentToken=${paymentToken}`;
-                        }
-                        
-                        btnText.textContent = 'Redirection vers MonCash...';
-                        
-                        // Redirection après un court délai
-                        setTimeout(() => {
-                            window.location.href = moncashUrl;
-                        }, 1000);
-                    } else {
-                        // Mode fallback si MonCash n'est pas configuré
-                        console.warn('MonCash: token non reçu, utilisation du mode fallback');
-                        
-                        await fetch('/api/payments/confirm', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ transactionId: data.transactionId })
-                        });
-                        
-                        window.location.href = '/donation/success?transactionId=' + data.transactionId;
-                    }
-                }
+                // Dans donate.html, remplace la section MonCash par :
 
+} else if (method === 'MONCASH') {
+    const redirectUrl = data.clientSecret; // C'est l'URL complète !
+    
+    if (redirectUrl && redirectUrl.startsWith('http')) {
+        btnText.textContent = 'Redirection vers MonCash...';
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 1000);
+    } else {
+        throw new Error('URL MonCash invalide');
+    }
+}
             } catch (err) {
                 console.error('Erreur paiement:', err);
                 globalError.textContent = err.message || 'Une erreur est survenue';
