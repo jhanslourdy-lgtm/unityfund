@@ -31,25 +31,28 @@
             </div>
             
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Merci pour votre don !</h1>
-            <p class="text-slate-500 mb-6">Votre soutien de <span class="font-bold text-primary" th:text="${payment.amount + ' $'}">0 $</span> a bien été reçu.</p>
+            <p class="text-slate-500 mb-6">
+                Votre soutien de <span class="font-bold text-primary" th:text="${payment != null ? payment.amount + ' $' : '0 $'}">0 $</span> 
+                a bien été reçu.
+            </p>
             
             <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 mb-6 text-left">
                 <div class="flex justify-between text-sm mb-2">
                     <span class="text-slate-500">Transaction</span>
-                    <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${#strings.substring(payment.transactionId, 0, 8)} + '...'">ABC123...</span>
+                    <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${param.transactionId != null ? #strings.substring(param.transactionId[0], 0, 8) + '...' : 'N/A'}">ABC123...</span>
                 </div>
                 <div class="flex justify-between text-sm mb-2">
                     <span class="text-slate-500">Campagne</span>
-                    <span class="font-medium text-slate-700 dark:text-slate-300" th:text="${campaign.title}">Titre</span>
+                    <span class="font-medium text-slate-700 dark:text-slate-300" th:text="${campaign != null ? campaign.title : 'Chargement...'}">Titre</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-slate-500">Date</span>
-                    <span class="text-slate-700 dark:text-slate-300" th:text="${#temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+                    <span class="text-slate-700 dark:text-slate-300" th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
                 </div>
             </div>
 
             <div class="flex flex-col gap-3">
-                <a th:href="@{/campaign/details/{id}(id=${campaign.id})}" class="w-full py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-all">
+                <a th:href="@{/campaign/details/{id}(id=${campaign != null ? campaign.id : 0})}" class="w-full py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-all">
                     Retour à la campagne
                 </a>
                 <a th:href="@{/explore}" class="w-full py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">

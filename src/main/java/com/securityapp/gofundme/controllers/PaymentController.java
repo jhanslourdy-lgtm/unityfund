@@ -123,6 +123,153 @@
 //public String paymentFailed() {
 //    return "payment-failed";
 //}
+////}
+//package com.securityapp.gofundme.controllers;
+//
+//import com.securityapp.gofundme.dto.DonationRequest;
+//import com.securityapp.gofundme.dto.PaymentIntent;
+//import com.securityapp.gofundme.model.User;
+//import com.securityapp.gofundme.services.PaymentService;
+//import com.securityapp.gofundme.services.StripePaymentProvider;
+//import com.securityapp.gofundme.services.UserService;
+//import jakarta.validation.Valid;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.http.ResponseEntity;
+//import org.springframework.security.core.annotation.AuthenticationPrincipal;
+//import org.springframework.security.core.userdetails.UserDetails;
+//import org.springframework.stereotype.Controller;
+//import org.springframework.ui.Model;
+//import org.springframework.web.bind.annotation.*;
+//
+//import java.util.Map;
+//
+//@Controller
+//@RequestMapping("/api/payments")
+//public class PaymentController {
+//
+//    @Autowired
+//    private PaymentService paymentService;
+//
+//    @Autowired
+//    private StripePaymentProvider stripeProvider;
+//
+//    @Autowired
+//    private UserService userService;
+//
+//    // ─── Stripe : créer intent ─────────────────────────────────────────────────
+//    @PostMapping("/create-intent")
+//    @ResponseBody
+//    public ResponseEntity<?> createPaymentIntent(
+//            @RequestBody @Valid DonationRequest request,
+//            @AuthenticationPrincipal UserDetails userDetails) {
+//        try {
+//            User donor = userService.findByEmail(userDetails.getUsername());
+//            PaymentIntent intent = paymentService.createPaymentIntent(request, donor);
+//            return ResponseEntity.ok(intent);
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+//        }
+//    }
+//
+//    // ─── Stripe : webhook ─────────────────────────────────────────────────────
+//    @PostMapping("/webhook/stripe")
+//    @ResponseBody
+//    public ResponseEntity<String> handleStripeWebhook(
+//            @RequestBody String payload,
+//            @RequestHeader("Stripe-Signature") String sigHeader,
+//            @Value("${stripe.webhook.secret:}") String secret) {
+//        try {
+//            if (secret == null || secret.isBlank()) {
+//                return ResponseEntity.status(500).body("Webhook secret non configuré");
+//            }
+//
+//            String transactionId = stripeProvider.handleWebhook(payload, sigHeader, secret);
+//            if (transactionId != null) {
+//                paymentService.confirmPayment(transactionId,
+//                        "{\"status\":\"SUCCESS\",\"provider\":\"stripe\"}");
+//            }
+//            return ResponseEntity.ok("OK");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(400).body("Erreur webhook: " + e.getMessage());
+//        }
+//    }
+//
+//    // ─── Stripe : confirmation manuelle (fallback) ────────────────────────────
+//    @PostMapping("/confirm")
+//    @ResponseBody
+//    public ResponseEntity<?> confirmPaymentManually(@RequestBody Map<String, String> payload) {
+//        try {
+//            String transactionId = payload.get("transactionId");
+//            paymentService.confirmPayment(transactionId,
+//                    "{\"status\":\"SUCCESS\",\"provider\":\"stripe_manual\"}");
+//            return ResponseEntity.ok(Map.of("success", true));
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+//        }
+//    }
+//
+//    // ─── MonCash : callback après paiement ────────────────────────────────────
+//    /**
+//     * MonCash sandbox renvoie le paramètre "token" (pas "transactionId").
+//     * On cherche d'abord "token", puis "transactionId", puis "orderId".
+//     *
+//     * URL exemple reçue :
+//     *   /api/payments/callback/moncash?token=<paymentToken>&orderId=<orderId>
+//     */
+//    @GetMapping("/callback/moncash")
+//    public String handleMonCashCallback(
+//            // FIX #6 : accepter le paramètre "token" renvoyé par MonCash sandbox
+//            @RequestParam(value = "token",         required = false) String token,
+//            @RequestParam(value = "transactionId", required = false) String transactionId,
+//            @RequestParam(value = "orderId",       required = false) String orderId,
+//            @RequestParam(value = "status", defaultValue = "SUCCESS") String status,
+//            Model model) {
+//
+//        try {
+//            System.out.println("=== MONCASH CALLBACK ===");
+//            System.out.println("token:         " + token);
+//            System.out.println("transactionId: " + transactionId);
+//            System.out.println("orderId:       " + orderId);
+//            System.out.println("status:        " + status);
+//
+//            // FIX #7 : priorité token > transactionId > orderId
+//            String effectiveId = token != null       ? token
+//                               : transactionId != null ? transactionId
+//                               : orderId;
+//
+//            if (effectiveId == null) {
+//                System.err.println("Aucun identifiant de transaction reçu dans le callback MonCash");
+//                return "redirect:/payment/failed";
+//            }
+//
+//            // En sandbox, tout callback est considéré comme succès
+//            // (MonCash sandbox ne renvoie pas toujours un paramètre status)
+//            boolean success = status == null
+//                    || "SUCCESS".equalsIgnoreCase(status)
+//                    || "COMPLETED".equalsIgnoreCase(status)
+//                    || "success".equalsIgnoreCase(status);
+//
+//            if (success) {
+//                paymentService.confirmPayment(effectiveId,
+//                        "{\"status\":\"SUCCESS\",\"provider\":\"moncash\"}");
+//                return "redirect:/donation/success?transactionId=" + effectiveId;
+//            } else {
+//                return "redirect:/payment/failed";
+//            }
+//
+//        } catch (Exception e) {
+//            System.err.println("Erreur callback MonCash: " + e.getMessage());
+//            e.printStackTrace();
+//            return "redirect:/payment/failed";
+//        }
+//    }
+//
+//    // ─── Page paiement échoué ─────────────────────────────────────────────────
+//    @GetMapping("/payment/failed")
+//    public String paymentFailed() {
+//        return "payment-failed";
+//    }
 //}
 package com.securityapp.gofundme.controllers;
 
@@ -132,6 +279,7 @@ import com.securityapp.gofundme.model.User;
 import com.securityapp.gofundme.services.PaymentService;
 import com.securityapp.gofundme.services.StripePaymentProvider;
 import com.securityapp.gofundme.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -209,55 +357,77 @@ public class PaymentController {
         }
     }
 
-    // ─── MonCash : callback après paiement ────────────────────────────────────
-    /**
-     * MonCash sandbox renvoie le paramètre "token" (pas "transactionId").
-     * On cherche d'abord "token", puis "transactionId", puis "orderId".
-     *
-     * URL exemple reçue :
-     *   /api/payments/callback/moncash?token=<paymentToken>&orderId=<orderId>
-     */
+    // ─── MonCash : callback APRÈS paiement (CORRIGÉ) ───────────────────────────
     @GetMapping("/callback/moncash")
-    public String handleMonCashCallback(
-            // FIX #6 : accepter le paramètre "token" renvoyé par MonCash sandbox
-            @RequestParam(value = "token",         required = false) String token,
-            @RequestParam(value = "transactionId", required = false) String transactionId,
-            @RequestParam(value = "orderId",       required = false) String orderId,
-            @RequestParam(value = "status", defaultValue = "SUCCESS") String status,
-            Model model) {
-
+    public String handleMonCashCallback(HttpServletRequest request, Model model) {
         try {
-            System.out.println("=== MONCASH CALLBACK ===");
-            System.out.println("token:         " + token);
-            System.out.println("transactionId: " + transactionId);
-            System.out.println("orderId:       " + orderId);
-            System.out.println("status:        " + status);
-
-            // FIX #7 : priorité token > transactionId > orderId
-            String effectiveId = token != null       ? token
-                               : transactionId != null ? transactionId
-                               : orderId;
-
-            if (effectiveId == null) {
-                System.err.println("Aucun identifiant de transaction reçu dans le callback MonCash");
+            System.out.println("=== MONCASH CALLBACK RECEIVED ===");
+            
+            // Récupérer TOUS les paramètres
+            Map<String, String[]> paramMap = request.getParameterMap();
+            System.out.println("Paramètres reçus:");
+            paramMap.forEach((key, value) -> 
+                System.out.println("  " + key + " = " + (value.length > 0 ? value[0] : "null")));
+            
+            // Chercher l'ID de transaction dans différents formats
+            String transactionId = null;
+            
+            // Format 1: transactionId
+            if (paramMap.containsKey("transactionId")) {
+                transactionId = paramMap.get("transactionId")[0];
+            }
+            // Format 2: orderId (utilisé par MonCash)
+            else if (paramMap.containsKey("orderId")) {
+                transactionId = paramMap.get("orderId")[0];
+            }
+            // Format 3: token
+            else if (paramMap.containsKey("token")) {
+                transactionId = paramMap.get("token")[0];
+            }
+            // Format 4: payment_token
+            else if (paramMap.containsKey("payment_token")) {
+                transactionId = paramMap.get("payment_token")[0];
+            }
+            
+            // Chercher aussi dans les headers
+            if (transactionId == null) {
+                String referer = request.getHeader("Referer");
+                if (referer != null && referer.contains("token=")) {
+                    String[] parts = referer.split("token=");
+                    if (parts.length > 1) {
+                        transactionId = parts[1].split("&")[0];
+                    }
+                }
+            }
+            
+            System.out.println("Transaction ID extrait: " + transactionId);
+            
+            if (transactionId == null || transactionId.isEmpty()) {
+                System.err.println("AUCUN IDENTIFIANT DE TRANSACTION TROUVÉ");
+                // En mode debug, essayer de confirmer avec le dernier paiement pending
                 return "redirect:/payment/failed";
             }
-
-            // En sandbox, tout callback est considéré comme succès
-            // (MonCash sandbox ne renvoie pas toujours un paramètre status)
-            boolean success = status == null
-                    || "SUCCESS".equalsIgnoreCase(status)
-                    || "COMPLETED".equalsIgnoreCase(status)
-                    || "success".equalsIgnoreCase(status);
-
+            
+            // Récupérer le statut
+            String status = "SUCCESS";
+            if (paramMap.containsKey("status")) {
+                status = paramMap.get("status")[0];
+            }
+            
+            boolean success = "SUCCESS".equalsIgnoreCase(status) 
+                           || "COMPLETED".equalsIgnoreCase(status)
+                           || "success".equalsIgnoreCase(status);
+            
             if (success) {
-                paymentService.confirmPayment(effectiveId,
-                        "{\"status\":\"SUCCESS\",\"provider\":\"moncash\"}");
-                return "redirect:/donation/success?transactionId=" + effectiveId;
+                System.out.println("Paiement réussi, confirmation en cours...");
+                paymentService.confirmPayment(transactionId, 
+                    "{\"status\":\"SUCCESS\",\"provider\":\"moncash\",\"callback\":\"received\"}");
+                return "redirect:/donation/success?transactionId=" + transactionId;
             } else {
+                System.out.println("Paiement échoué, status: " + status);
                 return "redirect:/payment/failed";
             }
-
+            
         } catch (Exception e) {
             System.err.println("Erreur callback MonCash: " + e.getMessage());
             e.printStackTrace();
@@ -269,5 +439,25 @@ public class PaymentController {
     @GetMapping("/payment/failed")
     public String paymentFailed() {
         return "payment-failed";
+    }
+    
+    // ─── ENDPOINT DE DEBUG POUR RENDER ────────────────────────────────────────
+    @GetMapping("/debug/check/{transactionId}")
+    @ResponseBody
+    public String debugCheckPayment(@PathVariable String transactionId) {
+        try {
+            var payment = paymentService.findByTransactionId(transactionId);
+            if (payment == null) {
+                return "Transaction non trouvée: " + transactionId;
+            }
+            return "Transaction: " + transactionId + 
+                   "\nStatus: " + payment.getStatus() +
+                   "\nAmount: " + payment.getAmount() +
+                   "\nCampaign current amount: " + 
+                   (payment.getDonation() != null && payment.getDonation().getCampaign() != null ? 
+                    payment.getDonation().getCampaign().getCurrentAmount() : "N/A");
+        } catch (Exception e) {
+            return "Erreur: " + e.getMessage();
+        }
     }
 }

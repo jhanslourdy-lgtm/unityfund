@@ -117,49 +117,49 @@
                     </div>
 
                     <!-- Méthode de paiement -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de paiement</label>
-                        <div class="flex gap-3">
-                            <!-- Stripe -->
-                            <label class="flex-1 cursor-pointer">
-                                <input type="radio" name="method" value="STRIPE" checked onchange="toggleMethod('STRIPE')" class="peer hidden"/>
-                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all h-full flex flex-col items-center justify-center gap-1">
-                                    <span class="material-symbols-outlined text-2xl text-slate-400 peer-checked:text-primary">credit_card</span>
-                                    <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Carte bancaire</p>
-                                    <p class="text-xs text-slate-400">Visa, Mastercard</p>
-                                </div>
-                            </label>
-                            <!-- MonCash -->
-                            <label class="flex-1 cursor-pointer">
-                                <input type="radio" name="method" value="MONCASH" onchange="toggleMethod('MONCASH')" class="peer hidden"/>
-                                <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all h-full flex flex-col items-center justify-center gap-1">
-                                    <img th:src="@{/images/cash.png}" alt="MonCash" class="h-8 object-contain"/>
-                                    <p class="text-xs text-slate-400">Digicel Haïti</p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+<div>
+    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de paiement</label>
+    <div class="flex gap-3">
+        <!-- Stripe -->
+        <label class="flex-1 cursor-pointer">
+            <input type="radio" name="method" value="STRIPE" checked onchange="toggleMethod('STRIPE')" class="peer hidden"/>
+            <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
+                <span class="material-symbols-outlined text-2xl text-slate-400 peer-checked:text-primary">credit_card</span>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Carte bancaire</p>
+                <p class="text-xs text-slate-400">Visa, Mastercard</p>
+            </div>
+        </label>
+        
+        <!-- MonCash -->
+        <label class="flex-1 cursor-pointer">
+            <input type="radio" name="method" value="MONCASH" onchange="toggleMethod('MONCASH')" class="peer hidden"/>
+            <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
+                <svg class="h-8 mx-auto" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="40" rx="8" fill="#FF6B00"/>
+                    <text x="50" y="26" text-anchor="middle" fill="white" font-size="14" font-weight="bold">MonCash</text>
+                </svg>
+                <p class="text-xs text-slate-400 mt-1">Digicel Haïti</p>
+            </div>
+        </label>
+    </div>
+</div>
 
-                    <!-- Section Stripe -->
-                    <div id="stripe-section">
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Informations de carte</label>
-                        <!--
-                            FIX STRIPE : div avec dimensions explicites pour que l'iframe
-                            Stripe puisse se monter correctement dans tous les navigateurs.
-                        -->
-                        <div id="card-element" style="min-height:46px;"></div>
-                        <div id="card-errors" class="text-xs text-red-500 mt-2"></div>
-                    </div>
+<!-- Section Stripe -->
+<div id="stripe-section">
+    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Informations de carte</label>
+    <div id="card-element" style="min-height:46px;"></div>
+    <div id="card-errors" class="text-xs text-red-500 mt-2"></div>
+</div>
 
-                    <!-- Section MonCash -->
-                    <div id="moncash-section" class="hidden p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                        <div class="flex items-start gap-3">
-                            <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 mt-0.5">info</span>
-                            <p class="text-xs text-amber-700 dark:text-amber-300">
-                                Vous serez redirigé vers l'interface sécurisée de MonCash (Digicel Haïti) pour finaliser la transaction.
-                            </p>
-                        </div>
-                    </div>
+<!-- Section MonCash -->
+<div id="moncash-section" class="hidden p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">info</span>
+        <p class="text-xs text-amber-700 dark:text-amber-300">
+            Vous serez redirigé vers l'interface sécurisée de MonCash (Digicel Haïti) pour finaliser la transaction.
+        </p>
+    </div>
+</div>
 
                     <!-- Erreur globale -->
                     <div id="global-error" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
@@ -264,10 +264,17 @@
 
         // ── Méthode ──────────────────────────────────────────────────────────
         function toggleMethod(method) {
-            document.getElementById('stripe-section').classList.toggle('hidden', method !== 'STRIPE');
-            document.getElementById('moncash-section').classList.toggle('hidden', method !== 'MONCASH');
-        }
-
+    const stripeSection = document.getElementById('stripe-section');
+    const moncashSection = document.getElementById('moncash-section');
+    
+    if (method === 'STRIPE') {
+        stripeSection.classList.remove('hidden');
+        moncashSection.classList.add('hidden');
+    } else {
+        stripeSection.classList.add('hidden');
+        moncashSection.classList.remove('hidden');
+    }
+}
         // ── Soumission ───────────────────────────────────────────────────────
         async function submitDonation() {
             const method = document.querySelector('input[name="method"]:checked').value;
