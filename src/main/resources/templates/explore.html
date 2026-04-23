@@ -88,8 +88,31 @@
             <p class="text-lg text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
                 Des milliers de personnes utilisent UnityFund pour financer leurs projets.
             </p>
-            
-            <form th:action="@{/explore}" method="get" class="relative max-w-2xl mx-auto group">
+            <form th:action="@{/explore}" method="get" class="relative max-w-3xl mx-auto group">
+    <div class="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
+    <div class="relative flex items-center bg-white dark:bg-slate-800 rounded-full shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-700 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all">
+        <span class="material-symbols-outlined text-slate-400 ml-5 text-xl">search</span>
+        <input type="text" name="q" th:value="${searchQuery}" 
+               class="flex-1 py-4 px-4 bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 text-base"
+               placeholder="Rechercher par titre..."/>
+        
+        <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+        
+        <span class="material-symbols-outlined text-slate-400 text-xl">location_on</span>
+        <input type="text" name="location" th:value="${activeLocation}" list="locations-list"
+               class="w-40 sm:w-48 py-4 px-2 bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 text-base"
+               placeholder="Ville, pays..."/>
+        
+        <button type="submit" class="mr-2 bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-2.5 rounded-full transition-all">
+            Rechercher
+        </button>
+    </div>
+</form>
+
+<datalist id="locations-list">
+    <option th:each="loc : ${locations}" th:value="${loc}" th:text="${loc}"></option>
+</datalist>
+<!--            <form th:action="@{/explore}" method="get" class="relative max-w-2xl mx-auto group">
                 <div class="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
                 <div class="relative flex items-center bg-white dark:bg-slate-800 rounded-full shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-700 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all">
                     <span class="material-symbols-outlined text-slate-400 ml-5 text-xl">search</span>
@@ -100,7 +123,7 @@
                         Rechercher
                     </button>
                 </div>
-            </form>
+            </form>-->
         </div>
     </section>
 
@@ -108,18 +131,18 @@
     <section class="sticky top-16 z-40 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center gap-2 py-4 overflow-x-auto hide-scrollbar">
-                <a th:href="@{/explore}" 
-                   th:classappend="${activeCategory == null && searchQuery == null} ? 'active' : ''"
-                   class="category-pill flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-all">
-                    <span class="material-symbols-outlined text-lg">apps</span>
-                    Toutes
-                </a>
-                <a th:each="cat : ${categories}" 
-                   th:href="@{/explore(category=${cat.name})}"
-                   th:classappend="${activeCategory != null && activeCategory == cat.name} ? 'active' : ''"
-                   class="category-pill flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-all capitalize">
-                    <span th:text="${cat.name}">Catégorie</span>
-                </a>
+                <a th:href="@{/explore(q=${searchQuery}, location=${activeLocation})}" 
+   th:classappend="${activeCategory == null && searchQuery == null && activeLocation == null} ? 'active' : ''"
+   class="category-pill ...">
+    <span class="material-symbols-outlined text-lg">apps</span>
+    Toutes
+</a>
+<a th:each="cat : ${categories}" 
+   th:href="@{/explore(category=${cat.name}, q=${searchQuery}, location=${activeLocation})}"
+   th:classappend="${activeCategory != null && activeCategory == cat.name} ? 'active' : ''"
+   class="category-pill ...">
+    <span th:text="${cat.name}">Catégorie</span>
+</a>
             </div>
         </div>
     </section>
@@ -129,10 +152,19 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+    <span th:if="${searchQuery != null || activeCategory != null || activeLocation != null}">
+        Résultats
+        <span th:if="${searchQuery != null}" th:text="' pour &quot;' + ${searchQuery} + '&quot;'"></span>
+        <span th:if="${activeCategory != null}" th:text="' dans ' + ${activeCategory}"></span>
+        <span th:if="${activeLocation != null}" th:text="' à ' + ${activeLocation}"></span>
+    </span>
+    <span th:unless="${searchQuery != null || activeCategory != null || activeLocation != null}">Toutes les campagnes</span>
+</h2>
+<!--                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
                     <span th:if="${searchQuery != null}" th:text="'Résultats pour &quot;' + ${searchQuery} + '&quot;'">Résultats</span>
                     <span th:if="${activeCategory != null}" th:text="'Campagnes ' + ${activeCategory}">Catégorie</span>
                     <span th:if="${searchQuery == null && activeCategory == null}">Toutes les campagnes</span>
-                </h2>
+                </h2>-->
                 <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
                     <span th:text="${campaignPage.totalElements}">0</span> résultat(s) • 
                     Page <span th:text="${currentPage + 1}">1</span> sur <span th:text="${totalPages}">1</span>
@@ -220,7 +252,7 @@
 
         <!-- ========== PAGINATION ========== -->
         <div th:if="${totalPages > 1}" class="mt-12 flex items-center justify-center gap-2">
-            <!-- Bouton Précédent -->
+<!--             Bouton Précédent 
             <a th:if="${currentPage > 0}" 
                th:href="@{/explore(page=${currentPage - 1}, q=${searchQuery}, category=${activeCategory})}"
                class="pagination-btn flex items-center gap-1">
@@ -230,7 +262,26 @@
             <span th:unless="${currentPage > 0}" class="pagination-btn disabled flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">chevron_left</span>
                 Précédent
-            </span>
+            </span>-->
+<a th:if="${currentPage > 0}" 
+   th:href="@{/explore(page=${currentPage - 1}, q=${searchQuery}, category=${activeCategory}, location=${activeLocation})}"
+   class="pagination-btn flex items-center gap-1">
+    <span class="material-symbols-outlined text-sm">chevron_left</span>
+    Précédent
+</a>
+<!-- ... -->
+<a th:each="pageNum : ${pageNumbers}"
+   th:href="@{/explore(page=${pageNum - 1}, q=${searchQuery}, category=${activeCategory}, location=${activeLocation})}"
+   th:text="${pageNum}"
+   th:classappend="${pageNum == currentPage + 1} ? 'active' : ''"
+   class="pagination-btn min-w-[40px] text-center">1</a>
+<!-- ... -->
+<a th:if="${currentPage < totalPages - 1}" 
+   th:href="@{/explore(page=${currentPage + 1}, q=${searchQuery}, category=${activeCategory}, location=${activeLocation})}"
+   class="pagination-btn flex items-center gap-1">
+    Suivant
+    <span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
 
             <!-- Numéros de page -->
             <div class="flex items-center gap-1">

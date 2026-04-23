@@ -1,203 +1,3 @@
-<!--<!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#10b77f",
-                        "background-light": "#f6f8f7",
-                        "background-dark": "#10221c",
-                    },
-                    fontFamily: { "display": ["Inter", "sans-serif"] },
-                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
-                },
-            },
-        }
-    </script>
-    <title>Lancer une collecte | UnityFund</title>
-</head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
-
-<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10">
-    <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <div class="text-primary">
-                <svg class="size-8" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
-                </svg>
-            </div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">UnityFund</h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <span class="text-sm font-medium text-slate-500 hidden sm:inline" th:text="'Session: ' + ${#authentication.name}">Handy</span>
-            <button class="size-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
-                <span class="material-symbols-outlined">person</span>
-            </button>
-        </div>
-    </div>
-</header>
-
-<main class="max-w-2xl mx-auto px-6 py-12">
-    <div class="mb-12">
-        <div class="flex items-center justify-between relative">
-            <div class="absolute top-5 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-800 -z-10"></div>
-            <div class="absolute top-5 left-0 w-full h-0.5 bg-primary -z-10"></div>
-            <div class="flex flex-col items-center gap-2 bg-background-light dark:bg-background-dark px-2">
-                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">1</div>
-                <span class="text-xs font-semibold text-primary">Détails</span>
-            </div>
-            <div class="flex flex-col items-center gap-2 bg-background-light dark:bg-background-dark px-2">
-                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</div>
-                <span class="text-xs font-semibold text-primary">Histoire</span>
-            </div>
-            <div class="flex flex-col items-center gap-2 bg-background-light dark:bg-background-dark px-2">
-                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">3</div>
-                <span class="text-xs font-semibold text-primary">Lancement</span>
-            </div>
-        </div>
-    </div>
-
-    <form th:action="@{/campaign/save}" th:object="${campaign}" method="POST" enctype="multipart/form-data" class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-8">
-        <section class="space-y-8">
-            <div>
-                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Commençons par l'essentiel</h2>
-                <p class="text-slate-500 dark:text-slate-400 mt-1">Pour quelle cause récoltez-vous des fonds ?</p>
-            </div>
-
-            <div class="space-y-6">
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Titre de la collecte</label>
-                    <input type="text" th:field="*{title}" required
-                           class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all" 
-                           placeholder="ex: Projet de Jardin Communautaire"/>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Catégorie</label>
-                        <div class="relative">
-                            <select th:field="*{category}" class="w-full appearance-none px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none cursor-pointer">
-                                <option value="MEDICAL">Médical</option>
-                                <option value="EDUCATION">Éducation</option>
-                                <option value="ENVIRONMENT">Environnement</option>
-                                <option value="COMMUNITY">Communauté</option>
-                            </select>
-                            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Objectif (USD)</label>
-                        <div class="relative">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">attach_money</span>
-                            <input type="number" th:field="*{goalAmount}" step="0.01" required
-                                   class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none" 
-                                   placeholder="5000"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-100 dark:border-slate-800"/>
-
-            <div class="space-y-6">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Ajouter une photo</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Les collectes avec une image claire reçoivent 3x plus de dons.</p>
-                </div>
-                
-                <div class="relative group">
-                    <input type="file" name="imageFile" id="imageFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*" onchange="previewImage(event)"/>
-                    <div id="drop-zone" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-800/50 group-hover:bg-slate-100 transition-colors">
-                        <div class="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                            <span class="material-symbols-outlined text-3xl">image</span>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white" id="file-name">Cliquez pour uploader ou glissez l'image</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">PNG, JPG ou WEBP (Max 5Mo)</p>
-                        </div>
-                    </div>
-                    <img id="image-preview" class="hidden w-full h-48 object-cover rounded-xl mt-2 border border-slate-200"/>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Racontez votre histoire</label>
-                    <div class="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 p-2 flex gap-1">
-                            <span class="px-2 text-xs font-bold text-slate-400">ÉDITEUR SIMPLE</span>
-                        </div>
-                        <textarea th:field="*{description}" required
-                                  class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-0 border-none outline-none resize-none" 
-                                  placeholder="Pourquoi récoltez-vous cet argent ? Comment sera-t-il utilisé ?" rows="6"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-100 dark:border-slate-800"/>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Localisation</label>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
-                        <input type="text" th:field="*{location}" required
-                               class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none" 
-                               placeholder="Ville, Pays"/>
-                    </div>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Durée (Jours)</label>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">calendar_today</span>
-                        <input type="number" th:field="*{durationDays}" required
-                               class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none" 
-                               placeholder="30"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-6 flex flex-col sm:flex-row gap-4">
-                <button type="button" class="flex-1 order-2 sm:order-1 px-8 py-4 rounded-lg font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
-                    Enregistrer en brouillon
-                </button>
-                <button type="submit" class="flex-1 order-1 sm:order-2 px-8 py-4 rounded-lg font-bold text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2">
-                    Lancer la Campagne
-                    <span class="material-symbols-outlined">rocket_launch</span>
-                </button>
-            </div>
-        </section>
-    </form>
-</main>
-
-<script>
-    function previewImage(event) {
-        const reader = new FileReader();
-        const preview = document.getElementById('image-preview');
-        const dropZone = document.getElementById('drop-zone');
-        const fileName = document.getElementById('file-name');
-        
-        reader.onload = function(){
-            preview.src = reader.result;
-            preview.classList.remove('hidden');
-            dropZone.classList.add('hidden');
-        }
-        
-        if(event.target.files[0]) {
-            reader.readAsDataURL(event.target.files[0]);
-            fileName.textContent = event.target.files[0].name;
-        }
-    }
-</script>
-
-</body>
-</html>-->
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -323,7 +123,47 @@
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white" th:text="${isEdit} ? 'Modifier la photo' : 'Ajouter une photo'">Photo</h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400">Les collectes avec une image claire reçoivent 3x plus de dons.</p>
                 </div>
+                            <hr class="border-slate-100 dark:border-slate-800"/>
 
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Galerie médias</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Ajoutez jusqu'à 5 photos ou vidéos pour illustrer votre campagne.</p>
+                </div>
+
+                <!-- Médias existants (mode édition) -->
+                <div th:if="${isEdit && campaign.medias != null && !#lists.isEmpty(campaign.medias)}" 
+                     class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                    <div th:each="media : ${campaign.medias}" class="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img th:src="${media.mediaUrl}" class="w-full h-32 object-cover"/>
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <label class="flex items-center gap-1 text-white text-sm cursor-pointer">
+                                <input type="checkbox" name="deleteMediaIds" th:value="${media.id}" class="size-4"/>
+                                Supprimer
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative group">
+                    <input type="file" name="mediaFiles" id="mediaFiles" multiple 
+                           accept="image/*,video/*" 
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                           onchange="previewMedias(event)"/>
+                    <div id="media-drop-zone" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800/50 group-hover:bg-slate-100 transition-colors">
+                        <div class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">collections</span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">Ajouter des photos/vidéos</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Max 5 fichiers • PNG, JPG, MP4</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview nouveaux médias -->
+                <div id="media-preview-container" class="grid grid-cols-2 sm:grid-cols-3 gap-4 hidden"></div>
+            </div>
                 <!-- Aperçu image actuelle (mode édition) -->
                 <div th:if="${isEdit && campaign.imageUrl != null}" class="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 mb-4 group">
                     <img th:src="${campaign.imageUrl}" class="w-full h-48 object-cover" alt="Image actuelle"/>
@@ -416,6 +256,40 @@
             fileName.textContent = event.target.files[0].name;
         }
     }
+    function previewMedias(event) {
+    const container = document.getElementById('media-preview-container');
+    const dropZone = document.getElementById('media-drop-zone');
+    const files = event.target.files;
+    
+    if (files.length > 5) {
+        alert('Maximum 5 fichiers autorisés');
+        event.target.value = '';
+        return;
+    }
+    
+    container.innerHTML = '';
+    container.classList.remove('hidden');
+    dropZone.classList.add('hidden');
+    
+    Array.from(files).forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 h-32 flex items-center justify-center';
+        
+        if (file.type.startsWith('video/')) {
+            div.innerHTML = `
+                <span class="material-symbols-outlined text-4xl text-slate-400">videocam</span>
+                <span class="absolute bottom-2 left-2 text-xs text-white bg-black/60 px-2 py-1 rounded">${file.name}</span>
+            `;
+        } else {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover"/>`;
+            };
+            reader.readAsDataURL(file);
+        }
+        container.appendChild(div);
+    });
+}
 </script>
 
 </body>

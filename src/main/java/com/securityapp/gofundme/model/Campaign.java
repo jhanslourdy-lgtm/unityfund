@@ -4,6 +4,7 @@
  */
 package com.securityapp.gofundme.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,9 +15,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 /**
  *
@@ -154,4 +158,10 @@ public int getPercentage() {
         .divide(goalAmount, 0, RoundingMode.HALF_UP)
         .intValue();
 }
+    @OneToMany(mappedBy = "campaign", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC")
+    private List<CampaignMedia> medias;
+
+    public List<CampaignMedia> getMedias() { return medias; }
+    public void setMedias(List<CampaignMedia> medias) { this.medias = medias; }
 }

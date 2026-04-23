@@ -4,6 +4,19 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title th:text="'UnityFund - ' + ${campaign.title}">UnityFund - Détails de la campagne</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" th:content="${ogUrl}" />
+    <meta property="og:title" th:content="${ogTitle}" />
+    <meta property="og:description" th:content="${ogDescription}" />
+    <meta property="og:image" th:content="${ogImage}" />
+    <meta property="og:site_name" content="UnityFund" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" th:content="${ogUrl}" />
+    <meta name="twitter:title" th:content="${ogTitle}" />
+    <meta name="twitter:description" th:content="${ogDescription}" />
+    <meta name="twitter:image" th:content="${ogImage}" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -32,6 +45,10 @@
             100% { transform: scale(1); }
         }
     </style>
+    <style>
+.modal-report { display: none; }
+.modal-report.active { display: flex; }
+</style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
 <div class="relative flex min-h-screen flex-col">
@@ -108,6 +125,11 @@
                             <span class="material-symbols-outlined">share</span>
                             Partager
                         </button>
+                        <button onclick="openReportModal()" 
+        class="flex items-center gap-2 px-5 py-2.5 rounded-full border border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 font-semibold hover:bg-red-50 transition-all">
+    <span class="material-symbols-outlined">flag</span>
+    Signaler
+</button>
                     </div>
 
                     <div class="flex items-center gap-3">
@@ -141,6 +163,23 @@
                         <h3 class="mb-6 text-2xl font-bold">À propos de cette campagne</h3>
                         <div class="prose prose-slate max-w-none text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                             <p th:utext="${campaign.description}">Description détaillée...</p>
+                        
+                        </div>
+                    </div>
+                                        <!-- Galerie médias -->
+                    <div th:if="${campaign.medias != null && !#lists.isEmpty(campaign.medias)}" class="mt-8">
+                        <h3 class="text-xl font-bold mb-4">Galerie</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div th:each="media : ${campaign.medias}" class="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-100 dark:bg-slate-800">
+                                <img th:if="${media.type.name() == 'IMAGE'}" 
+                                     th:src="${media.mediaUrl}" 
+                                     class="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
+                                     onclick="window.open(this.src, '_blank')"/>
+                                <video th:if="${media.type.name() == 'VIDEO'}" 
+                                       th:src="${media.mediaUrl}" 
+                                       controls 
+                                       class="w-full h-full object-cover"></video>
+                            </div>
                         </div>
                     </div>
                                             <!-- Section Commentaires -->
@@ -216,7 +255,52 @@
             </div>
         </div>
     </main>
-
+<!-- Modal Signalement -->
+<div id="report-modal" class="modal-report fixed inset-0 z-50 bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white">Signaler cette campagne</h3>
+            <button onclick="closeReportModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <p class="text-sm text-slate-500 mb-4">Aidez-nous à maintenir la qualité de UnityFund en signalant les contenus problématiques.</p>
+        
+        <form id="report-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Raison du signalement</label>
+                <select id="report-reason" required class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none">
+                    <option value="" disabled selected>Choisir une raison</option>
+                    <option value="SPAM">Spam ou publicité</option>
+                    <option value="FRAUD">Fraude ou escroquerie</option>
+                    <option value="INAPPROPRIATE">Contenu inapproprié</option>
+                    <option value="MISLEADING">Informations trompeuses</option>
+                    <option value="OTHER">Autre</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description (optionnel)</label>
+                <textarea id="report-description" rows="3" maxlength="500"
+                          class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none resize-none"
+                          placeholder="Décrivez le problème..."></textarea>
+            </div>
+            
+            <div id="report-error" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+            <div id="report-success" class="hidden p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm"></div>
+            
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="closeReportModal()" class="flex-1 py-3 rounded-lg font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" class="flex-1 py-3 rounded-lg font-bold text-white bg-red-500 hover:bg-red-600 transition-all shadow-lg shadow-red-500/20">
+                    Envoyer le signalement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
     <footer class="mt-12 border-t border-primary/10 bg-white py-8 dark:bg-background-dark text-center text-xs text-slate-400">
         <p>© 2026 UnityFund - Soutenez des projets avec Handy.</p>
     </footer>
@@ -350,6 +434,57 @@ function escapeHtml(text) {
 
 // Charger les commentaires au chargement
 document.addEventListener('DOMContentLoaded', loadComments);
+
+// ========== SYSTÈME DE SIGNAGEMENT ==========
+function openReportModal() {
+    document.getElementById('report-modal').classList.add('active');
+}
+
+function closeReportModal() {
+    document.getElementById('report-modal').classList.remove('active');
+    document.getElementById('report-form').reset();
+    document.getElementById('report-error').classList.add('hidden');
+    document.getElementById('report-success').classList.add('hidden');
+}
+
+document.getElementById('report-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const reason = document.getElementById('report-reason').value;
+    const description = document.getElementById('report-description').value;
+    const errorDiv = document.getElementById('report-error');
+    const successDiv = document.getElementById('report-success');
+    
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+    
+    try {
+        const response = await fetch('/api/campaigns/' + campaignId + '/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason, description: description })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            successDiv.textContent = data.message;
+            successDiv.classList.remove('hidden');
+            setTimeout(closeReportModal, 2000);
+        } else {
+            errorDiv.textContent = data.error || 'Une erreur est survenue';
+            errorDiv.classList.remove('hidden');
+        }
+    } catch (err) {
+        errorDiv.textContent = 'Erreur réseau';
+        errorDiv.classList.remove('hidden');
+    }
+});
+
+// Fermer la modal en cliquant à l'extérieur
+document.getElementById('report-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeReportModal();
+});
 </script>
 </body>
 </html>

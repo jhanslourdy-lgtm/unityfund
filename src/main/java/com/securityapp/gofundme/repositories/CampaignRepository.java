@@ -1,39 +1,3 @@
-///*
-// * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-// * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
-// */
-//package com.securityapp.gofundme.repositories;
-//
-//import com.securityapp.gofundme.model.Campaign;
-//import com.securityapp.gofundme.model.CampaignStatus;
-//import com.securityapp.gofundme.model.User;
-//import java.util.List;
-//import org.springframework.data.jpa.repository.JpaRepository;
-//import org.springframework.stereotype.Repository;
-//
-///**
-// *
-// * @author Handy
-// */
-//@Repository
-//public interface CampaignRepository extends JpaRepository<Campaign, Long> {
-//    
-//    // Trouver toutes les campagnes d'un créateur spécifique
-//    
-//    // Trouver les campagnes par statut (ex: afficher uniquement les ACTIVE)
-//    List<Campaign> findByStatus(CampaignStatus status);
-//    
-//    // Trouver les campagnes d'une catégorie particulière
-//    List<Campaign> findByUser(User user);
-//
-//    // Recherche par mot-clé dans le titre (Utile pour une barre de recherche)
-//    List<Campaign> findByTitleContainingIgnoreCase(String keyword);
-//    // Trouve toutes les campagnes d'un utilisateur spécifique
-//    List<Campaign> findByTitleContainingIgnoreCaseAndStatus(String keyword, CampaignStatus status);
-//List<Campaign> findByCategory_NameIgnoreCaseAndStatus(String categoryName, CampaignStatus status);
-//
-//   
-//}
 package com.securityapp.gofundme.repositories;
 
 import com.securityapp.gofundme.model.Campaign;
@@ -43,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -69,4 +35,17 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     
     // Pagination pour les campagnes d'un utilisateur
     Page<Campaign> findByUser(User user, Pageable pageable);
+    
+    @Query("SELECT c FROM Campaign c WHERE c.status = :status " +
+       "AND (:q IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+       "AND (:categoryName IS NULL OR LOWER(c.category.name) = LOWER(:categoryName)) " +
+       "AND (:location IS NULL OR LOWER(c.location) LIKE LOWER(CONCAT('%', :location, '%')))")
+Page<Campaign> searchActive(@Param("status") CampaignStatus status,
+                            @Param("q") String q,
+                            @Param("categoryName") String categoryName,
+                            @Param("location") String location,
+                            Pageable pageable);
+
+@Query("SELECT DISTINCT c.location FROM Campaign c WHERE c.status = :status AND c.location IS NOT NULL AND c.location <> '' ORDER BY c.location")
+List<String> findDistinctLocationsByStatus(@Param("status") CampaignStatus status);
 }
