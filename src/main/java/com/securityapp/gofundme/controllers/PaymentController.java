@@ -92,35 +92,18 @@ public String handleMonCashCallback(
         @RequestParam(value = "transactionId", required = false) String transactionId,
         @RequestParam(value = "orderId", required = false) String orderId,
         @RequestParam(value = "payment_token", required = false) String paymentToken,
-        @RequestParam(value = "status", defaultValue = "FAILED") String status,
-        Model model) {
+        @RequestParam(value = "status", defaultValue = "FAILED") String status) {
     
-    try {
-        System.out.println("=== MONCASH CALLBACK ===");
-        System.out.println("transactionId: " + transactionId);
-        System.out.println("orderId: " + orderId);
-        
-        String effectiveId = (transactionId != null) ? transactionId : orderId;
-        
-        if (effectiveId == null) {
-            return "redirect:/payment/failed";
-        }
-        
-        // VÉRIFICATION RÉELLE via le SDK
-        boolean isValid = moncashProvider.verifyPayment(effectiveId);
-        
-        if (isValid) {
-            paymentService.confirmPayment(effectiveId, "{\"status\": \"SUCCESS\", \"provider\": \"moncash\"}");
-            return "redirect:/donation/success?transactionId=" + effectiveId;
-        } else {
-            return "redirect:/payment/failed";
-        }
-        
-    } catch (Exception e) {
-        System.err.println("Erreur callback MonCash: " + e.getMessage());
-        e.printStackTrace();
-        return "redirect:/payment/failed";
+    String effectiveId = (transactionId != null) ? transactionId : orderId;
+    if (effectiveId == null) return "redirect:/payment/failed";
+
+    boolean isValid = moncashProvider.verifyPayment(effectiveId);
+    
+    if (isValid) {
+        paymentService.confirmPayment(effectiveId, "{\"status\":\"SUCCESS\",\"provider\":\"moncash\"}");
+        return "redirect:/donation/success?transactionId=" + effectiveId;
     }
+    return "redirect:/payment/failed";
 }
 @GetMapping("/payment/failed")
 public String paymentFailed() {
