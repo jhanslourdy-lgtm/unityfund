@@ -1,0 +1,109 @@
+/* UnityFund - correctifs UI globaux
+   Objectif : éviter les textes superposés, améliorer la responsivité et sécuriser les mises en page. */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6,
+p, span, a, button, label, small,
+.card-title, .campaign-title {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.25;
+}
+
+p, li, td, th, input, textarea, select {
+  line-height: 1.45;
+}
+
+img, video, svg {
+  max-width: 100%;
+}
+
+input, textarea, select, button {
+  min-width: 0;
+}
+
+table {
+  width: 100%;
+}
+
+.responsive-table,
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Évite que les cartes et grilles forcent la page à déborder sur mobile. */
+.grid, .flex {
+  min-width: 0;
+}
+
+/* Bouton retour réutilisable */
+.uf-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 2.5rem;
+  padding: .55rem .85rem;
+  border: 1px solid rgb(226 232 240);
+  border-radius: .75rem;
+  font-size: .875rem;
+  font-weight: 700;
+  color: rgb(71 85 105);
+  background: rgba(255,255,255,.85);
+  transition: all .2s ease;
+}
+
+.uf-back-link:hover {
+  color: #10b77f;
+  border-color: rgba(16,183,127,.35);
+  background: rgba(16,183,127,.08);
+}
+
+/* Formulaires longs */
+.uf-form-card {
+  width: 100%;
+  overflow: hidden;
+}
+
+.uf-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .uf-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  h1 { font-size: clamp(1.5rem, 7vw, 2.25rem) !important; }
+  h2 { font-size: clamp(1.25rem, 6vw, 1.875rem) !important; }
+  h3 { font-size: clamp(1.05rem, 5vw, 1.35rem) !important; }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .mobile-full {
+    width: 100% !important;
+  }
+}
