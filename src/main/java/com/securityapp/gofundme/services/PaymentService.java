@@ -2,63 +2,101 @@ package com.securityapp.gofundme.services;
 
 import com.securityapp.gofundme.dto.DonationRequest;
 import com.securityapp.gofundme.dto.PaymentIntent;
-import com.securityapp.gofundme.model.*;
+import com.securityapp.gofundme.model.AuditAction;
+import com.securityapp.gofundme.model.AuditStatus;
+import com.securityapp.gofundme.model.Campaign;
+import com.securityapp.gofundme.model.CampaignStatus;
+import com.securityapp.gofundme.model.Donation;
+import com.securityapp.gofundme.model.Payment;
+import com.securityapp.gofundme.model.PaymentMethod;
+import com.securityapp.gofundme.model.PaymentStatus;
+import com.securityapp.gofundme.model.User;
 import com.securityapp.gofundme.repositories.CampaignRepository;
+import com.securityapp.gofundme.repositories.DonationRepository;
 import com.securityapp.gofundme.repositories.PaymentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.securityapp.gofundme.repositories.DonationRepository;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
 public class PaymentService {
-       
+
     @Autowired
     private DonationRepository donationRepository;
 
     @Autowired
     private StripePaymentProvider stripeProvider;
-    
+
     @Autowired
     private MonCashPaymentProvider moncashProvider;
-    
+
     @Autowired
     private PaymentRepository paymentRepository;
-    
+
     @Autowired
     private CampaignRepository campaignRepository;
 
     @Autowired
     private AuditLogService auditLogService;
-    
+
     @Value("${platform.fee.percentage:0.05}")
     private BigDecimal platformFeePct;
-    
+
     @Transactional
     public PaymentIntent createPaymentIntent(DonationRequest request, User donor) throws Exception {
+
         Campaign campaign = campaignRepository.findById(request.getCampaignId())
-            .orElseThrow(() -> new RuntimeException("Campagne non trouvée"));
-            
+                .orElseThrow(() -> new RuntimeException("Campagne non trouvée"));
+
+        auditLogService.log(
+                AuditAction.DONATION_CREATE_ATTEMPT,
+                AuditStatus.ATTEMPT,
+                "Donation",
+                null,
+                "Tentative de création d'un don",
+                null,
+                "amount=" + request.getAmount()
+                        + ", method=" + request.getMethod()
+                        + ", campaignId=" + request.getCampaignId()
+                        + ", donor=" + safeEmail(donor),
+                null,
+                null
+        );
+
         if (campaign.getStatus() != CampaignStatus.ACTIVE) {
+            auditLogService.log(
+                    AuditAction.DONATION_PAYMENT_FAILED,
+                    AuditStatus.FAILED,
+                    "Campaign",
+                    campaign.getId(),
+                    "Tentative de don refusée : campagne inactive",
+                    null,
+                    "campaignStatus=" + campaign.getStatus()
+                            + ", amount=" + request.getAmount()
+                            + ", donor=" + safeEmail(donor),
+                    null,
+                    null
+            );
+
             throw new RuntimeException("Cette campagne n'est plus active");
         }
-        
+
         BigDecimal amount = request.getAmount();
         BigDecimal platformFee = amount.multiply(platformFeePct);
         BigDecimal processingFee = calculateProcessingFee(amount, request.getMethod());
         BigDecimal netAmount = amount.subtract(platformFee).subtract(processingFee);
-        
+
         Donation donation = new Donation();
         donation.setAmount(amount);
         donation.setCampaign(campaign);
         donation.setDonor(donor);
         donation.setMessage(request.getMessage());
         donationRepository.save(donation);
-        
+
         Payment payment = new Payment();
         payment.setTransactionId(UUID.randomUUID().toString());
         payment.setAmount(amount);
@@ -68,77 +106,166 @@ public class PaymentService {
         payment.setMethod(request.getMethod());
         payment.setStatus(PaymentStatus.PENDING);
         payment.setDonation(donation);
-        
+
         PaymentIntent intent;
-        switch (request.getMethod()) {
-            case STRIPE:
+
+        try {
+            if (request.getMethod() == PaymentMethod.STRIPE) {
                 intent = stripeProvider.createIntent(payment, campaign, donor);
-                break;
-            case MONCASH:
+            } else if (request.getMethod() == PaymentMethod.MONCASH) {
                 intent = moncashProvider.createIntent(payment, campaign, donor);
-                break;
-            default:
-                throw new IllegalArgumentException("Méthode non supportée");
+            } else {
+                throw new IllegalArgumentException("Méthode de paiement non supportée");
+            }
+
+            payment.setProviderResponse(intent.getProviderJson());
+            paymentRepository.save(payment);
+
+            auditLogService.log(
+                    AuditAction.DONATION_PAYMENT_PENDING,
+                    AuditStatus.PENDING,
+                    "Payment",
+                    payment.getId(),
+                    "Don créé, paiement en attente",
+                    null,
+                    "transactionId=" + payment.getTransactionId()
+                            + ", donationId=" + donation.getId()
+                            + ", amount=" + amount
+                            + ", method=" + request.getMethod()
+                            + ", campaignId=" + campaign.getId()
+                            + ", donor=" + safeEmail(donor),
+                    null,
+                    null
+            );
+
+            return intent;
+
+        } catch (Exception e) {
+            auditLogService.log(
+                    AuditAction.DONATION_PAYMENT_FAILED,
+                    AuditStatus.FAILED,
+                    "Donation",
+                    donation.getId(),
+                    "Échec pendant la création de l'intention de paiement",
+                    null,
+                    "amount=" + amount
+                            + ", method=" + request.getMethod()
+                            + ", campaignId=" + campaign.getId()
+                            + ", donor=" + safeEmail(donor)
+                            + ", error=" + e.getMessage(),
+                    null,
+                    null
+            );
+
+            throw e;
         }
-        
-        payment.setProviderResponse(intent.getProviderJson());
-        paymentRepository.save(payment);
-        
-        return intent;
     }
-    
+
     @Transactional
     public void confirmPayment(String transactionId, String providerResponse) {
+
         Payment payment = paymentRepository.findByTransactionId(transactionId)
-            .orElseThrow(() -> new RuntimeException("Transaction non trouvée"));
-            
-        if (payment.getStatus() == PaymentStatus.COMPLETED) return;
-        
+                .orElseThrow(() -> new RuntimeException("Transaction non trouvée"));
+
+        if (payment.getStatus() == PaymentStatus.COMPLETED) {
+            auditLogService.log(
+                    AuditAction.DONATION_PAYMENT_SUCCESS,
+                    AuditStatus.SUCCESS,
+                    "Payment",
+                    payment.getId(),
+                    "Paiement déjà confirmé auparavant",
+                    "COMPLETED",
+                    "COMPLETED",
+                    "transactionId=" + transactionId,
+                    null
+            );
+
+            return;
+        }
+
+        PaymentStatus oldStatus = payment.getStatus();
+
         payment.setStatus(PaymentStatus.COMPLETED);
         payment.setProviderResponse(providerResponse);
-        
+
         Campaign campaign = payment.getDonation().getCampaign();
+        BigDecimal oldCampaignAmount = campaign.getCurrentAmount();
+
         campaign.setCurrentAmount(campaign.getCurrentAmount().add(payment.getAmount()));
-        
+
         if (campaign.getCurrentAmount().compareTo(campaign.getGoalAmount()) >= 0) {
             campaign.setStatus(CampaignStatus.COMPLETED);
         }
-        
+
         campaignRepository.save(campaign);
         paymentRepository.save(payment);
 
         auditLogService.log(
-            "SYSTEM",
-            "PAYMENT_COMPLETED",
-            "Payment",
-            payment.getId(),
-            "PENDING",
-            "COMPLETED; amount=" + payment.getAmount()
-                + "; campaignId=" + campaign.getId()
-                + "; donationId=" + payment.getDonation().getId(),
-            null
-        );
-
-        auditLogService.log(
-            "SYSTEM",
-            "DONATION_CONFIRMED",
-            "Donation",
-            payment.getDonation().getId(),
-            null,
-            "amount=" + payment.getAmount()
-                + "; campaign=" + campaign.getTitle(),
-            null
+                AuditAction.DONATION_PAYMENT_SUCCESS,
+                AuditStatus.SUCCESS,
+                "Payment",
+                payment.getId(),
+                "Paiement confirmé avec succès",
+                "status=" + oldStatus + ", campaignAmount=" + oldCampaignAmount,
+                "status=" + payment.getStatus()
+                        + ", campaignAmount=" + campaign.getCurrentAmount()
+                        + ", transactionId=" + payment.getTransactionId()
+                        + ", donationId=" + payment.getDonation().getId()
+                        + ", campaignId=" + campaign.getId()
+                        + ", amount=" + payment.getAmount()
+                        + ", method=" + payment.getMethod(),
+                providerResponse,
+                null
         );
     }
-    
+
+    @Transactional
+    public void failPayment(String transactionId, String providerResponse) {
+
+        Payment payment = paymentRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction non trouvée"));
+
+        PaymentStatus oldStatus = payment.getStatus();
+
+        payment.setStatus(PaymentStatus.FAILED);
+        payment.setProviderResponse(providerResponse);
+        paymentRepository.save(payment);
+
+        auditLogService.log(
+                AuditAction.DONATION_PAYMENT_FAILED,
+                AuditStatus.FAILED,
+                "Payment",
+                payment.getId(),
+                "Paiement échoué",
+                "status=" + oldStatus,
+                "status=" + payment.getStatus()
+                        + ", transactionId=" + payment.getTransactionId()
+                        + ", donationId=" + payment.getDonation().getId()
+                        + ", campaignId=" + payment.getDonation().getCampaign().getId()
+                        + ", amount=" + payment.getAmount()
+                        + ", method=" + payment.getMethod(),
+                providerResponse,
+                null
+        );
+    }
+
     private BigDecimal calculateProcessingFee(BigDecimal amount, PaymentMethod method) {
-        switch (method) {
-            case STRIPE:
-                return amount.multiply(new BigDecimal("0.029")).add(new BigDecimal("0.30"));
-            case MONCASH:
-                return amount.multiply(new BigDecimal("0.02"));
-            default:
-                return BigDecimal.ZERO;
+        if (method == PaymentMethod.STRIPE) {
+            return amount.multiply(new BigDecimal("0.029")).add(new BigDecimal("0.30"));
         }
+
+        if (method == PaymentMethod.MONCASH) {
+            return amount.multiply(new BigDecimal("0.02"));
+        }
+
+        return BigDecimal.ZERO;
+    }
+
+    private String safeEmail(User user) {
+        if (user == null) {
+            return "ANONYMOUS";
+        }
+
+        return user.getEmail();
     }
 }

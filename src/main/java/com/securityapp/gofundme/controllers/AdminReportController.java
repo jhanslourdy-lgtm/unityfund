@@ -1,5 +1,7 @@
 package com.securityapp.gofundme.controllers;
 
+import com.securityapp.gofundme.model.AuditAction;
+import com.securityapp.gofundme.model.AuditStatus;
 import com.securityapp.gofundme.model.Report;
 import com.securityapp.gofundme.repositories.ReportRepository;
 import com.securityapp.gofundme.services.AuditLogService;
@@ -37,7 +39,17 @@ public class AdminReportController {
         String oldStatus = report.getStatus().name();
         report.setStatus(status);
         reportRepository.save(report);
-        auditLogService.log(authentication, request, "REPORT_STATUS_CHANGED", "Report", id, oldStatus, status.name());
+        auditLogService.log(
+    AuditAction.REPORT_UPDATED,
+    AuditStatus.SUCCESS,
+    "Report",
+    report.getId(),
+    "Modification du signalement par l'admin",
+    oldValue,
+    newValue,
+    null,
+    request
+);
         return "redirect:/admin/reports";
     }
 }

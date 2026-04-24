@@ -1,5 +1,7 @@
 package com.securityapp.gofundme.controllers;
 
+import com.securityapp.gofundme.model.AuditAction;
+import com.securityapp.gofundme.model.AuditStatus;
 import com.securityapp.gofundme.model.Withdrawal;
 import com.securityapp.gofundme.repositories.WithdrawalRepository;
 import com.securityapp.gofundme.services.AuditLogService;
@@ -38,7 +40,17 @@ public class AdminWithdrawalController {
         Withdrawal withdrawal = withdrawalRepository.findById(id).orElseThrow(() -> new RuntimeException("Retrait non trouvé"));
         String oldStatus = withdrawal.getStatus().name();
         withdrawalService.approveWithdrawal(id);
-        auditLogService.log(authentication, request, "WITHDRAWAL_APPROVED", "Withdrawal", id, oldStatus, "COMPLETED");
+        auditLogService.log(
+    AuditAction.WITHDRAWAL_APPROVED,
+    AuditStatus.SUCCESS,
+    "Withdrawal",
+    withdrawal.getId(),
+    "Retrait approuvé par l'admin",
+    oldValue,
+    newValue,
+    null,
+    request
+);
         return "redirect:/admin/withdrawals";
     }
 
@@ -47,7 +59,17 @@ public class AdminWithdrawalController {
         Withdrawal withdrawal = withdrawalRepository.findById(id).orElseThrow(() -> new RuntimeException("Retrait non trouvé"));
         String oldStatus = withdrawal.getStatus().name();
         withdrawalService.rejectWithdrawal(id, "Rejeté par l'administrateur");
-        auditLogService.log(authentication, request, "WITHDRAWAL_REJECTED", "Withdrawal", id, oldStatus, "REJECTED");
+        auditLogService.log(
+    AuditAction.WITHDRAWAL_REJECTED,
+    AuditStatus.SUCCESS,
+    "Withdrawal",
+    withdrawal.getId(),
+    "Retrait rejeté par l'admin",
+    oldValue,
+    newValue,
+    null,
+    request
+);
         return "redirect:/admin/withdrawals";
     }
 }
