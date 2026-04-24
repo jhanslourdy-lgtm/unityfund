@@ -21,7 +21,7 @@
             }
         }
     </script>
-    <link rel="stylesheet" th:href="@{/css/unityfund-ui-fixes.css}">
+    <link rel="stylesheet" th:href="@{/css/ux-global.css}" href="/css/ux-global.css">
 </head>
 <body class="bg-background-light dark:bg-background-dark min-h-screen font-display text-slate-900 dark:text-slate-100">
     <div class="max-w-2xl mx-auto px-4 py-12">
@@ -122,5 +122,6 @@
             document.querySelectorAll('#bank-fields input').forEach(i => i.required = (method === 'BANK'));
         }
     </script>
+<script th:src="@{/js/ux-global.js}" src="/js/ux-global.js"></script>
 </body>
 </html>

@@ -41,7 +41,7 @@
         .pagination-btn.active { @apply bg-primary text-white border-primary hover:bg-primary/90; }
         .pagination-btn.disabled { @apply opacity-50 cursor-not-allowed hover:bg-white dark:hover:bg-slate-800; }
     </style>
-    <link rel="stylesheet" th:href="@{/css/unityfund-ui-fixes.css}">
+    <link rel="stylesheet" th:href="@{/css/ux-global.css}" href="/css/ux-global.css">
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased">
 
@@ -361,5 +361,6 @@
         });
     });
     </script>
+<script th:src="@{/js/ux-global.js}" src="/js/ux-global.js"></script>
 </body>
 </html>

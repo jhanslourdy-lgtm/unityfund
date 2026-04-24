@@ -2,242 +2,313 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link rel="stylesheet" th:href="@{/css/pro-ui-fixes.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#10b77f",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#10221c",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
     <title th:text="${isEdit} ? 'Modifier la campagne | UnityFund' : 'Lancer une collecte | UnityFund'">UnityFund</title>
+    <link rel="stylesheet" th:href="@{/css/ux-global.css}" href="/css/ux-global.css">
 </head>
-<body class="font-display min-h-screen">
-<header class="uf-header">
-    <div class="uf-topbar">
-        <a th:href="@{/dashboard}" class="uf-brand">
-            <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="#10b77f"/>
-            </svg>
-            <span>UnityFund</span>
-        </a>
-        <div class="uf-actions">
-            <button type="button" onclick="history.back()" class="uf-btn">
-                <span class="material-symbols-outlined">arrow_back</span>
-                <span class="uf-back-label">Retour</span>
-            </button>
-            <a th:href="@{/dashboard}" class="uf-btn uf-btn-ghost">Annuler</a>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10">
+    <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="text-primary">
+                <svg class="size-8" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                </svg>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">UnityFund</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <a th:href="@{/dashboard}" class="text-sm font-medium text-slate-500 hover:text-primary transition-colors">Annuler</a>
         </div>
     </div>
 </header>
 
-<main class="uf-page-shell">
-    <div class="mb-8 max-w-3xl mx-auto">
-        <h1 class="text-3xl sm:text-4xl font-black tracking-tight mb-2" th:text="${isEdit} ? 'Modifier votre campagne' : 'Lancer une campagne'">Lancer une campagne</h1>
-        <p class="text-slate-500 leading-relaxed" th:text="${isEdit} ? 'Mettez à jour les informations essentielles de votre collecte.' : 'Présentez clairement votre histoire, votre objectif et vos médias pour inspirer confiance.'">Présentez clairement votre histoire.</p>
+<main class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div class="mb-12">
+        <div class="flex items-center justify-between relative">
+            <div class="absolute top-5 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-800 -z-10"></div>
+            <div class="absolute top-5 left-0 w-full h-0.5 bg-primary -z-10"></div>
+            <div class="flex flex-col items-center gap-2 bg-background-light dark:bg-background-dark px-2">
+                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">1</div>
+                <span class="text-xs font-semibold text-primary">Détails</span>
+            </div>
+            <div class="flex flex-col items-center gap-2 bg-background-light dark:bg-background-dark px-2">
+                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</div>
+                <span class="text-xs font-semibold text-primary">Histoire</span>
+            </div>
+            <div class="flex flex-col items-center gap-2 bg-background-light dark:bg-background-dark px-2">
+                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">3</div>
+                <span class="text-xs font-semibold text-primary">Lancement</span>
+            </div>
+        </div>
     </div>
 
-    <div th:if="${error}" class="max-w-3xl mx-auto mb-5 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl font-semibold" th:text="${error}"></div>
+    <!-- Messages flash -->
+    <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm font-medium" th:text="${error}"></div>
 
-    <form id="campaignForm"
-          th:action="${isEdit} ? @{/campaign/update/{id}(id=${campaign.id})} : @{/campaign/save}"
-          th:object="${campaign}"
-          method="POST"
-          enctype="multipart/form-data"
-          class="uf-form-card">
+    <form data-fluid-fundraiser="true" th:action="${isEdit} ? @{/campaign/update/{id}(id=${campaign.id})} : @{/campaign/save}" 
+          th:object="${campaign}" 
+          method="POST" 
+          enctype="multipart/form-data" 
+          class="uf-fluid-form bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 sm:p-8">
+        
+        <input type="hidden" th:field="*{id}" />
 
-        <input type="hidden" th:field="*{id}"/>
-
-        <section class="uf-section">
-            <h2 class="uf-section-title">Informations principales</h2>
-            <p class="uf-section-text">Choisissez un titre clair, une catégorie adaptée et un objectif réaliste.</p>
-
-            <div class="mt-6 uf-field">
-                <label class="uf-label" for="title">Titre de la collecte</label>
-                <input id="title" type="text" th:field="*{title}" required class="uf-control" placeholder="Ex. Aider Marie à financer son traitement"/>
+        <section class="space-y-8">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white" th:text="${isEdit} ? 'Modifier votre campagne' : 'Commençons par l\'essentiel'">Titre</h2>
+                <p class="text-slate-500 dark:text-slate-400 mt-1" th:text="${isEdit} ? 'Mettez à jour les informations de votre collecte.' : 'Pour quelle cause récoltez-vous des fonds ?'">Sous-titre</p>
             </div>
 
-            <div class="mt-5 uf-form-grid">
-                <div class="uf-field">
-                    <label class="uf-label" for="category">Catégorie</label>
-                    <select id="category" th:field="*{category.id}" required class="uf-control">
-                        <option value="" disabled selected>Choisir une catégorie</option>
-                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Catégorie</option>
-                    </select>
+            <div class="space-y-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Titre de la collecte</label>
+                    <input type="text" th:field="*{title}" required
+                           class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all" 
+                           placeholder="ex: Projet de Jardin Communautaire"/>
                 </div>
 
-                <div class="uf-field">
-                    <label class="uf-label" for="goalAmount">Objectif en USD</label>
-                    <div class="uf-input-wrap">
-                        <span class="material-symbols-outlined uf-input-icon">attach_money</span>
-                        <input id="goalAmount" type="number" th:field="*{goalAmount}" step="0.01" min="1" required class="uf-control has-icon" placeholder="5000"/>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Catégorie</label>
+                        <div class="relative">
+                            <select th:field="*{category.id}" required 
+                                    class="w-full appearance-none px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none cursor-pointer">
+                                <option value="" disabled selected>Choisir une catégorie</option>
+                                <option th:each="cat : ${categories}" 
+                                        th:value="${cat.id}" 
+                                        th:text="${cat.name}"
+                                        th:selected="${campaign.category != null && campaign.category.id == cat.id}">
+                                    Catégorie
+                                </option>
+                            </select>
+                            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Objectif (USD)</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">attach_money</span>
+                            <input type="number" th:field="*{goalAmount}" step="0.01" min="1" required
+                                   class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none" 
+                                   placeholder="5000"/>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <section class="uf-section">
-            <h2 class="uf-section-title">Image principale</h2>
-            <p class="uf-section-text">Cette image sera utilisée comme couverture. Si vous ajoutez une galerie sans couverture, la première image de la galerie sera utilisée automatiquement.</p>
+            <hr class="border-slate-100 dark:border-slate-800"/>
 
-            <div th:if="${isEdit && campaign.imageUrl != null}" class="mt-5 uf-preview-item" style="height:190px">
-                <img th:src="${campaign.imageUrl}" alt="Image actuelle" style="height:190px"/>
-                <span class="uf-preview-name">Image actuelle</span>
-            </div>
-
-            <div class="mt-5 uf-dropzone" id="mainDropzone">
-                <input type="file" name="imageFile" id="imageFile" accept="image/*" onchange="previewMainImage(event)"/>
-                <div id="mainDropContent">
-                    <span class="material-symbols-outlined text-4xl text-emerald-600 mb-2">image</span>
-                    <p class="font-extrabold">Choisir l'image principale</p>
-                    <p class="uf-help mt-1">PNG, JPG ou WEBP — optionnelle si une galerie contient une image</p>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white" th:text="${isEdit} ? 'Modifier la photo' : 'Ajouter une photo'">Photo</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Les collectes avec une image claire reçoivent 3x plus de dons.</p>
                 </div>
-            </div>
-            <div id="mainPreview" class="uf-preview-grid hidden"></div>
-        </section>
+                            <hr class="border-slate-100 dark:border-slate-800"/>
 
-        <section class="uf-section">
-            <h2 class="uf-section-title">Galerie médias</h2>
-            <p class="uf-section-text">Ajoutez jusqu’à 5 images ou vidéos. Les fichiers sélectionnés sont prévisualisés avant l’envoi.</p>
-
-            <div th:if="${isEdit && campaign.medias != null && !#lists.isEmpty(campaign.medias)}" class="uf-preview-grid mt-5">
-                <div th:each="media : ${campaign.medias}" class="uf-preview-item">
-                    <img th:if="${media.mediaType == 'IMAGE'}" th:src="${media.mediaUrl}" alt="Média existant"/>
-                    <video th:unless="${media.mediaType == 'IMAGE'}" th:src="${media.mediaUrl}" controls></video>
-                    <label class="uf-preview-name cursor-pointer">
-                        <input type="checkbox" name="deleteMediaIds" th:value="${media.id}" class="mr-1"/> Supprimer
-                    </label>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Galerie médias</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Ajoutez jusqu'à 5 photos ou vidéos pour illustrer votre campagne.</p>
                 </div>
-            </div>
 
-            <div class="mt-5 uf-dropzone" id="galleryDropzone">
-                <input type="file" name="mediaFiles" id="mediaFiles" multiple accept="image/*,video/*" onchange="previewGallery(event)"/>
-                <div id="galleryDropContent">
-                    <span class="material-symbols-outlined text-4xl text-emerald-600 mb-2">collections</span>
-                    <p class="font-extrabold">Ajouter des photos ou vidéos</p>
-                    <p class="uf-help mt-1">Maximum 5 fichiers — JPG, PNG, WEBP, MP4</p>
-                </div>
-            </div>
-            <div id="galleryPreview" class="uf-preview-grid hidden"></div>
-            <button type="button" id="clearGalleryBtn" class="mt-3 uf-btn hidden" onclick="clearGallery()">Retirer les nouveaux médias sélectionnés</button>
-        </section>
-
-        <section class="uf-section">
-            <h2 class="uf-section-title">Votre histoire</h2>
-            <p class="uf-section-text">Expliquez pourquoi vous collectez des fonds et comment l’argent sera utilisé.</p>
-            <div class="uf-field mt-5">
-                <label class="uf-label" for="description">Description</label>
-                <div class="uf-editor">
-                    <div class="uf-editor-head">Éditeur simple</div>
-                    <textarea id="description" th:field="*{description}" required class="uf-control" placeholder="Racontez votre histoire avec précision..."></textarea>
-                </div>
-            </div>
-        </section>
-
-        <section class="uf-section">
-            <h2 class="uf-section-title">Localisation et durée</h2>
-            <div class="uf-form-grid mt-5">
-                <div class="uf-field">
-                    <label class="uf-label" for="location">Localisation</label>
-                    <div class="uf-input-wrap">
-                        <span class="material-symbols-outlined uf-input-icon">location_on</span>
-                        <input id="location" type="text" th:field="*{location}" required class="uf-control has-icon" placeholder="Port-au-Prince, Haïti"/>
+                <!-- Médias existants (mode édition) -->
+                <div th:if="${isEdit && campaign.medias != null && !#lists.isEmpty(campaign.medias)}" 
+                     class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                    <div th:each="media : ${campaign.medias}" class="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img th:src="${media.mediaUrl}" class="w-full h-32 object-cover"/>
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <label class="flex items-center gap-1 text-white text-sm cursor-pointer">
+                                <input type="checkbox" name="deleteMediaIds" th:value="${media.id}" class="size-4"/>
+                                Supprimer
+                            </label>
+                        </div>
                     </div>
                 </div>
-                <div class="uf-field">
-                    <label class="uf-label" for="durationDays">Durée en jours</label>
-                    <div class="uf-input-wrap">
-                        <span class="material-symbols-outlined uf-input-icon">calendar_today</span>
-                        <input id="durationDays" type="number" th:field="*{durationDays}" min="1" max="365" required class="uf-control has-icon" placeholder="45"/>
+
+                <div class="relative group">
+                    <input type="file" name="mediaFiles" id="mediaFiles" multiple 
+                           accept="image/*,video/*" 
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                           onchange="previewMedias(event)"/>
+                    <div id="media-drop-zone" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800/50 group-hover:bg-slate-100 transition-colors">
+                        <div class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">collections</span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">Ajouter des photos/vidéos</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Max 5 fichiers • PNG, JPG, MP4</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview nouveaux médias -->
+                <div id="media-preview-container" class="grid grid-cols-2 sm:grid-cols-3 gap-4 hidden"></div>
+            </div>
+                <!-- Aperçu image actuelle (mode édition) -->
+                <div th:if="${isEdit && campaign.imageUrl != null}" class="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 mb-4 group">
+                    <img th:src="${campaign.imageUrl}" class="w-full h-48 object-cover" alt="Image actuelle"/>
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p class="text-white font-semibold text-sm">Image actuelle</p>
+                    </div>
+                </div>
+                
+                <div class="relative group">
+                    <input type="file" name="imageFile" id="imageFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*" onchange="previewImage(event)"/>
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-800/50 group-hover:bg-slate-100 transition-colors">
+                        <div class="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            <span class="material-symbols-outlined text-3xl">image</span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white" id="file-name">
+                                <span th:if="${isEdit}">Cliquez pour changer l'image (optionnel)</span>
+                                <span th:unless="${isEdit}">Cliquez pour uploader ou glissez l'image</span>
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">PNG, JPG ou WEBP (Max 5Mo)</p>
+                        </div>
+                    </div>
+                    <img id="image-preview" class="hidden w-full h-48 object-cover rounded-xl mt-2 border border-slate-200"/>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Racontez votre histoire</label>
+                    <div class="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 p-2 flex gap-1">
+                            <span class="px-2 text-xs font-bold text-slate-400">ÉDITEUR SIMPLE</span>
+                        </div>
+                        <textarea th:field="*{description}" required
+                                  class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-0 border-none outline-none resize-none" 
+                                  placeholder="Pourquoi récoltez-vous cet argent ? Comment sera-t-il utilisé ?" rows="6"></textarea>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <div class="uf-form-actions">
-            <a th:href="@{/dashboard}" class="uf-btn">Annuler</a>
-            <button id="submitBtn" type="submit" class="uf-btn uf-btn-primary">
-                <span th:text="${isEdit} ? 'Mettre à jour' : 'Lancer la campagne'">Lancer la campagne</span>
-                <span class="material-symbols-outlined" th:text="${isEdit} ? 'save' : 'rocket_launch'">rocket_launch</span>
-            </button>
-        </div>
+            <hr class="border-slate-100 dark:border-slate-800"/>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Localisation</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
+                        <input type="text" th:field="*{location}" required
+                               class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none" 
+                               placeholder="Ville, Pays"/>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Durée (Jours)</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">calendar_today</span>
+                        <input type="number" th:field="*{durationDays}" min="1" max="365" required
+                               class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none" 
+                               placeholder="30"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row gap-4">
+                <a th:href="@{/dashboard}" class="flex-1 order-2 sm:order-1 px-8 py-4 rounded-lg font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors text-center">
+                    Annuler
+                </a>
+                <button type="submit" class="flex-1 order-1 sm:order-2 px-8 py-4 rounded-lg font-bold text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2">
+    <span th:text="${isEdit} ? 'Mettre à jour' : 'Lancer la Campagne'">Lancer la Campagne</span>
+    <span class="material-symbols-outlined" th:text="${isEdit} ? 'save' : 'rocket_launch'">rocket_launch</span>
+</button>
+            </div>
+        </section>
     </form>
 </main>
 
-<script th:src="@{/js/pro-ui-fixes.js}"></script>
 <script>
-    const MAX_GALLERY_FILES = 5;
-
-    function fileCard(file, dataUrl) {
-        const div = document.createElement('div');
-        div.className = 'uf-preview-item';
-        if (file.type.startsWith('video/')) {
-            div.innerHTML = '<video src="' + dataUrl + '" controls></video><span class="uf-preview-name">' + escapeHtml(file.name) + '</span>';
-        } else {
-            div.innerHTML = '<img src="' + dataUrl + '" alt="Prévisualisation"><span class="uf-preview-name">' + escapeHtml(file.name) + '</span>';
-        }
-        return div;
-    }
-
-    function previewMainImage(event) {
-        const file = event.target.files && event.target.files[0];
-        const preview = document.getElementById('mainPreview');
-        const dropContent = document.getElementById('mainDropContent');
-        preview.innerHTML = '';
-        if (!file) { preview.classList.add('hidden'); dropContent.classList.remove('hidden'); return; }
+    function previewImage(event) {
         const reader = new FileReader();
-        reader.onload = e => {
-            preview.appendChild(fileCard(file, e.target.result));
+        const preview = document.getElementById('image-preview');
+        const dropZone = document.getElementById('drop-zone');
+        const fileName = document.getElementById('file-name');
+        
+        reader.onload = function(){
+            preview.src = reader.result;
             preview.classList.remove('hidden');
-            dropContent.classList.add('hidden');
-        };
-        reader.readAsDataURL(file);
+            dropZone.classList.add('hidden');
+        }
+        
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+            fileName.textContent = event.target.files[0].name;
+        }
     }
-
-    function previewGallery(event) {
-        const input = event.target;
-        const files = Array.from(input.files || []);
-        const preview = document.getElementById('galleryPreview');
-        const clearBtn = document.getElementById('clearGalleryBtn');
-        const dropContent = document.getElementById('galleryDropContent');
-
-        if (files.length > MAX_GALLERY_FILES) {
-            alert('Maximum ' + MAX_GALLERY_FILES + ' fichiers autorisés.');
-            input.value = '';
-            return;
-        }
-
-        preview.innerHTML = '';
-        if (!files.length) {
-            preview.classList.add('hidden');
-            clearBtn.classList.add('hidden');
-            dropContent.classList.remove('hidden');
-            return;
-        }
-
-        files.forEach(file => {
+    function previewMedias(event) {
+    const container = document.getElementById('media-preview-container');
+    const dropZone = document.getElementById('media-drop-zone');
+    const files = event.target.files;
+    
+    if (files.length > 5) {
+        alert('Maximum 5 fichiers autorisés');
+        event.target.value = '';
+        return;
+    }
+    
+    container.innerHTML = '';
+    container.classList.remove('hidden');
+    dropZone.classList.add('hidden');
+    
+    Array.from(files).forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 h-32 flex items-center justify-center';
+        
+        if (file.type.startsWith('video/')) {
+            div.innerHTML = `
+                <span class="material-symbols-outlined text-4xl text-slate-400">videocam</span>
+                <span class="absolute bottom-2 left-2 text-xs text-white bg-black/60 px-2 py-1 rounded">${file.name}</span>
+            `;
+        } else {
             const reader = new FileReader();
-            reader.onload = e => preview.appendChild(fileCard(file, e.target.result));
+            reader.onload = function(e) {
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover"/>`;
+            };
             reader.readAsDataURL(file);
-        });
-        preview.classList.remove('hidden');
-        clearBtn.classList.remove('hidden');
-        dropContent.classList.add('hidden');
-    }
-
-    function clearGallery() {
-        const input = document.getElementById('mediaFiles');
-        input.value = '';
-        previewGallery({target: input});
-    }
-
-    function escapeHtml(value) {
-        return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    }
-
-    document.getElementById('campaignForm').addEventListener('submit', function () {
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.style.opacity = '.75';
-        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span><span>Envoi en cours...</span>';
+        }
+        container.appendChild(div);
     });
+}
+</script>
+
+<script th:src="@{/js/ux-global.js}" src="/js/ux-global.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const form=document.querySelector('form[data-fluid-fundraiser="true"]');
+  const main=document.getElementById('imageFile');
+  const medias=document.getElementById('mediaFiles');
+  if(form && main && medias){
+    form.addEventListener('submit', function(e){
+      if(!main.files.length && !medias.files.length){
+        e.preventDefault();
+        alert('Ajoutez au moins une image principale ou un média dans la galerie.');
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>

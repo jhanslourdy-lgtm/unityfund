@@ -22,10 +22,9 @@
             },
         }
     </script>
-    <link rel="stylesheet" th:href="@{/css/unityfund-ui-fixes.css}">
+    <link rel="stylesheet" th:href="@{/css/ux-global.css}" href="/css/ux-global.css">
 </head>
 <body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
-    <div class="fixed top-4 left-4 z-50"><a th:href="@{/home}" class="uf-back-link"><span class="material-symbols-outlined text-sm">arrow_back</span>Accueil</a></div>
     <div class="w-full max-w-[440px]">
         <div class="flex flex-col items-center mb-8">
             <div class="bg-primary/10 p-3 rounded-xl mb-4">
@@ -64,5 +63,6 @@
             </div>
         </div>
     </div>
+<script th:src="@{/js/ux-global.js}" src="/js/ux-global.js"></script>
 </body>
 </html>

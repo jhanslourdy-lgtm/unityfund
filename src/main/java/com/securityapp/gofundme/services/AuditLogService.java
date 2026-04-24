@@ -11,26 +11,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuditLogService {
-
     private final AuditLogRepository auditLogRepository;
+    public AuditLogService(AuditLogRepository auditLogRepository) { this.auditLogRepository = auditLogRepository; }
 
-    public AuditLogService(AuditLogRepository auditLogRepository) {
-        this.auditLogRepository = auditLogRepository;
-    }
-
-    public void log(
-            AuditAction action,
-            AuditStatus status,
-            String entityName,
-            Long entityId,
-            String description,
-            String oldValue,
-            String newValue,
-            String extraData,
-            HttpServletRequest request
-    ) {
+    public void log(AuditAction action, AuditStatus status, String entityName, Long entityId, String description, String oldValue, String newValue, String extraData, HttpServletRequest request) {
         AuditLog log = new AuditLog();
-
         log.setActorEmail(getCurrentActor());
         log.setAction(action);
         log.setStatus(status);
@@ -40,27 +25,16 @@ public class AuditLogService {
         log.setOldValue(oldValue);
         log.setNewValue(newValue);
         log.setExtraData(extraData);
-
         if (request != null) {
             log.setIpAddress(getClientIp(request));
             log.setRequestUri(request.getRequestURI());
             log.setHttpMethod(request.getMethod());
         }
-
-        auditLogRepository.save(log);
+        try { auditLogRepository.save(log); } catch (Exception ignored) { }
     }
 
-    public void log(
-            Authentication authentication,
-            HttpServletRequest request,
-            String action,
-            String entityName,
-            Long entityId,
-            String oldValue,
-            String newValue
-    ) {
+    public void log(Authentication authentication, HttpServletRequest request, String action, String entityName, Long entityId, String oldValue, String newValue) {
         AuditLog log = new AuditLog();
-
         log.setActorEmail(authentication != null ? authentication.getName() : getCurrentActor());
         log.setAction(parseAction(action));
         log.setStatus(AuditStatus.SUCCESS);
@@ -69,27 +43,16 @@ public class AuditLogService {
         log.setDescription("Action administrative : " + action);
         log.setOldValue(oldValue);
         log.setNewValue(newValue);
-
         if (request != null) {
             log.setIpAddress(getClientIp(request));
             log.setRequestUri(request.getRequestURI());
             log.setHttpMethod(request.getMethod());
         }
-
-        auditLogRepository.save(log);
+        try { auditLogRepository.save(log); } catch (Exception ignored) { }
     }
 
-    public void log(
-            String actorEmail,
-            String action,
-            String entityName,
-            Long entityId,
-            String oldValue,
-            String newValue,
-            String ipAddress
-    ) {
+    public void log(String actorEmail, String action, String entityName, Long entityId, String oldValue, String newValue, String ipAddress) {
         AuditLog log = new AuditLog();
-
         log.setActorEmail(actorEmail);
         log.setAction(parseAction(action));
         log.setStatus(AuditStatus.SUCCESS);
@@ -99,75 +62,21 @@ public class AuditLogService {
         log.setOldValue(oldValue);
         log.setNewValue(newValue);
         log.setIpAddress(ipAddress);
-
-        auditLogRepository.save(log);
-    }
-
-    public void success(
-            AuditAction action,
-            String entityName,
-            Long entityId,
-            String description,
-            String oldValue,
-            String newValue,
-            HttpServletRequest request
-    ) {
-        log(action, AuditStatus.SUCCESS, entityName, entityId, description, oldValue, newValue, null, request);
-    }
-
-    public void failed(
-            AuditAction action,
-            String entityName,
-            Long entityId,
-            String description,
-            String oldValue,
-            String newValue,
-            HttpServletRequest request
-    ) {
-        log(action, AuditStatus.FAILED, entityName, entityId, description, oldValue, newValue, null, request);
-    }
-
-    public void removed(
-            AuditAction action,
-            String entityName,
-            Long entityId,
-            String description,
-            String oldValue,
-            String newValue,
-            HttpServletRequest request
-    ) {
-        log(action, AuditStatus.REMOVED, entityName, entityId, description, oldValue, newValue, null, request);
+        try { auditLogRepository.save(log); } catch (Exception ignored) { }
     }
 
     private String getCurrentActor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "SYSTEM";
-        }
-
+        if (authentication == null || !authentication.isAuthenticated()) return "SYSTEM";
         return authentication.getName();
     }
-
     private AuditAction parseAction(String action) {
-        if (action == null) {
-            return AuditAction.UNKNOWN_ACTION;
-        }
-
-        try {
-            return AuditAction.valueOf(action);
-        } catch (Exception e) {
-            return AuditAction.ADMIN_ACTION;
-        }
+        if (action == null) return AuditAction.UNKNOWN_ACTION;
+        try { return AuditAction.valueOf(action); } catch (Exception e) { return AuditAction.ADMIN_ACTION; }
     }
-
     private String getClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
-
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-
+        if (forwarded != null && !forwarded.isBlank()) return forwarded.split(",")[0].trim();
         return request.getRemoteAddr();
     }
 }

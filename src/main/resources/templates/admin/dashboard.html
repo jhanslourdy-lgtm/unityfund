@@ -1,26 +1,6 @@
-<!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Tableau de bord')}"></head>
-<body>
-<div class="admin-shell">
-    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('dashboard')}"></aside>
-    <main class="main">
-        <div class="topbar"><div><h2>Tableau de bord admin</h2><p>Vue globale sur l'activité de la plateforme.</p></div></div>
-        <section class="grid stats">
-            <div class="card stat"><div class="icon"><i class="fa-solid fa-users"></i></div><div class="value" th:text="${totalUsers}">0</div><div class="label">Utilisateurs</div></div>
-            <div class="card stat"><div class="icon"><i class="fa-solid fa-bullhorn"></i></div><div class="value" th:text="${totalCampaigns}">0</div><div class="label">Campagnes</div></div>
-            <div class="card stat"><div class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></div><div class="value" th:text="${totalDonations}">0</div><div class="label">Dons</div></div>
-            <div class="card stat"><div class="icon"><i class="fa-solid fa-layer-group"></i></div><div class="value" th:text="${totalCategories}">0</div><div class="label">Catégories</div></div>
-            <div class="card stat"><div class="icon"><i class="fa-solid fa-money-bill-transfer"></i></div><div class="value" th:text="${totalWithdrawals}">0</div><div class="label">Demandes de retrait</div></div>
-            <div class="card stat"><div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="value" th:text="${totalReports}">0</div><div class="label">Signalements</div></div>
-        </section>
-        <section class="card table-card">
-            <div class="table-head"><h3>Campagnes récentes</h3><a class="btn btn-light" th:href="@{/admin/campaigns}">Tout voir</a></div>
-            <div class="table-scroll"><table><thead><tr><th>ID</th><th>Titre</th><th>Créateur</th><th>Objectif</th><th>Collecté</th><th>Statut</th></tr></thead>
-                <tbody><tr th:each="c : ${recentCampaigns}"><td th:text="${c.id}">1</td><td th:text="${c.title}">Titre</td><td th:text="${c.user != null ? c.user.email : 'N/A'}">email</td><td th:text="${c.goalAmount}">0</td><td th:text="${c.currentAmount}">0</td><td><span class="badge" th:classappend="${c.status}" th:text="${c.status}">ACTIVE</span></td></tr></tbody>
-            </table></div>
-        </section>
-    </main>
-</div>
-</body>
-</html>
+<!DOCTYPE html><html lang="fr" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dashboard admin - UnityFund Admin</title><link rel="stylesheet" th:href="@{/css/admin-pro.css}" href="/css/admin-pro.css"></head><body class="admin-body"><div class="mobile-overlay" data-admin-overlay></div><div class="admin-shell"><aside class="admin-sidebar">
+  <div class="admin-brand"><span class="admin-logo"></span><span>UnityFund Admin</span></div>
+  <nav class="admin-nav">
+    <a href="/admin/dashboard">Dashboard</a><a href="/admin/users">Utilisateurs</a><a href="/admin/campaigns">Campagnes</a><a href="/admin/donations">Dons</a><a href="/admin/categories">Catégories</a><a href="/admin/withdrawals">Retraits</a><a href="/admin/reports">Signalements</a><a href="/admin/audit-logs">Audit logs</a><a href="/home">Retour au site</a>
+  </nav>
+</aside><main class="admin-main"><header class="admin-topbar"><button class="hamburger" type="button" data-admin-menu-toggle>☰</button><div class="admin-title"><h1>Dashboard admin</h1><p>Vue globale de la plateforme</p></div><div class="page-actions"><a class="btn btn-soft smart-back" href="#" data-fallback="/admin/dashboard">← Retour</a></div></header><section class="admin-content"><div class="admin-grid"><a class="stat-card" href="/admin/users"><span>Utilisateurs</span><strong th:text="${totalUsers}">0</strong></a><a class="stat-card" href="/admin/campaigns"><span>Campagnes</span><strong th:text="${totalCampaigns}">0</strong></a><a class="stat-card" href="/admin/donations"><span>Dons</span><strong th:text="${totalDonations}">0</strong></a><a class="stat-card" href="/admin/reports"><span>Signalements</span><strong th:text="${totalReports}">0</strong></a></div><div class="admin-grid" style="margin-top:18px"><a class="stat-card" href="/admin/categories"><span>Catégories</span><strong th:text="${totalCategories}">0</strong></a><a class="stat-card" href="/admin/withdrawals"><span>Retraits</span><strong th:text="${totalWithdrawals}">0</strong></a><a class="stat-card" href="/admin/audit-logs"><span>Audit logs</span><strong>Voir</strong></a></div><div class="admin-card"><div class="admin-card-header"><h2>Centre de contrôle</h2></div><p class="admin-footer-note">Tous les liens du dashboard pointent vers des routes admin existantes. Sur mobile, le menu devient un bouton hamburger.</p></div></section></main></div><script th:src="@{/js/admin-pro.js}" src="/js/admin-pro.js"></script></body></html>
