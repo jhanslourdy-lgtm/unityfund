@@ -3,54 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit des activités</title>
-    <style>
-        body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111827}
-        .card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(15,23,42,.08)}
-        .top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
-        h1{margin:0;font-size:24px}.table-wrap{overflow-x:auto}
-        table{width:100%;border-collapse:collapse;min-width:1150px}th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top;font-size:14px}th{background:#f9fafb;font-weight:700}.badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}.SUCCESS{background:#dcfce7;color:#166534}.FAILED{background:#fee2e2;color:#991b1b}.ATTEMPT{background:#dbeafe;color:#1e40af}.REMOVED,.CANCELLED{background:#fef3c7;color:#92400e}.small{font-size:12px;color:#6b7280}.details{max-width:280px;white-space:normal;word-break:break-word}.filters{display:flex;gap:10px;flex-wrap:wrap}.filters input,.filters select{padding:10px;border:1px solid #d1d5db;border-radius:10px}.filters button{padding:10px 14px;border:0;border-radius:10px;background:#0b4f9c;color:white;font-weight:700}
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/pro-ui-fixes.css}">
+    <title>Audit des activités | Admin</title>
 </head>
-<body>
-<div class="card">
-    <div class="top">
-        <h1>Audit des activités</h1>
-        <form class="filters" th:action="@{/admin/audit-logs}" method="get">
-            <input name="actor" placeholder="Email utilisateur" th:value="${param.actor}">
-            <select name="status">
-                <option value="">Tous statuts</option>
-                <option value="ATTEMPT">Tentative</option>
-                <option value="SUCCESS">Succès</option>
-                <option value="FAILED">Échec</option>
-                <option value="REMOVED">Retiré</option>
-                <option value="CANCELLED">Annulé</option>
-            </select>
-            <button type="submit">Filtrer</button>
-        </form>
-    </div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-            <tr>
-                <th>Date</th><th>Utilisateur</th><th>Action</th><th>Statut</th><th>Entité</th><th>Résumé</th><th>Route/IP</th><th>Erreur</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="log : ${logs}">
-                <td th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></td>
-                <td><span th:text="${log.actorEmail}"></span><div class="small" th:if="${log.actorId != null}" th:text="'ID: ' + ${log.actorId}"></div></td>
-                <td th:text="${log.action}"></td>
-                <td><span class="badge" th:classappend="${log.status}" th:text="${log.status}"></span></td>
-                <td><span th:text="${log.entityName}"></span><div class="small" th:if="${log.entityId != null}" th:text="'ID: ' + ${log.entityId}"></div></td>
-                <td class="details"><strong th:text="${log.summary}"></strong><div class="small" th:if="${log.newValue != null}" th:text="${log.newValue}"></div></td>
-                <td class="details"><span th:text="${log.httpMethod}"></span> <span th:text="${log.requestUri}"></span><div class="small" th:text="${log.ipAddress}"></div></td>
-                <td class="details" th:text="${log.errorMessage}"></td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(logs)}"><td colspan="8">Aucun audit trouvé.</td></tr>
-            </tbody>
-        </table>
-    </div>
+<body style="font-family:Inter, sans-serif">
+<div class="uf-admin-shell">
+    <div class="uf-admin-overlay" data-admin-overlay></div>
+    <aside class="uf-admin-sidebar">
+        <a th:href="@{/admin/dashboard}" class="uf-brand" style="color:white">
+            <span class="material-symbols-outlined" style="color:#10b77f">admin_panel_settings</span>
+            <span>UnityFund Admin</span>
+        </a>
+        <nav class="uf-admin-nav">
+            <a th:href="@{/admin/dashboard}"><span class="material-symbols-outlined">dashboard</span> Dashboard</a>
+            <a th:href="@{/admin/users}"><span class="material-symbols-outlined">group</span> Utilisateurs</a>
+            <a th:href="@{/admin/campaigns}"><span class="material-symbols-outlined">campaign</span> Campagnes</a>
+            <a th:href="@{/admin/donations}"><span class="material-symbols-outlined">volunteer_activism</span> Dons</a>
+            <a th:href="@{/admin/categories}"><span class="material-symbols-outlined">category</span> Catégories</a>
+            <a th:href="@{/admin/withdrawals}"><span class="material-symbols-outlined">payments</span> Retraits</a>
+            <a th:href="@{/admin/reports}"><span class="material-symbols-outlined">flag</span> Signalements</a>
+            <a th:href="@{/admin/audit-logs}"><span class="material-symbols-outlined">manage_search</span> Audits</a>
+        </nav>
+    </aside>
+
+    <main class="uf-admin-main">
+        <div class="uf-admin-top">
+            <div style="min-width:0">
+                <h1 style="margin:0;font-size:clamp(1.4rem,4vw,2rem);font-weight:900">Audit des activités</h1>
+                <p style="margin:.25rem 0 0;color:#64748b">Historique des actions utilisateurs, administrateurs et système.</p>
+            </div>
+            <button class="uf-btn uf-admin-menu-btn" data-admin-menu type="button">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+
+        <section class="uf-admin-card">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+                <strong th:text="${logs != null ? #lists.size(logs) : 0} + ' lignes affichées'">0 lignes affichées</strong>
+                <a class="uf-btn" th:href="@{/admin/dashboard}">
+                    <span class="material-symbols-outlined">arrow_back</span> Retour dashboard
+                </a>
+            </div>
+
+            <div class="uf-table-wrap">
+                <table class="uf-table">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Acteur</th>
+                        <th>Action</th>
+                        <th>Statut</th>
+                        <th>Entité</th>
+                        <th>Description</th>
+                        <th>Avant</th>
+                        <th>Après</th>
+                        <th>Route / IP</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="log : ${logs}">
+                        <td th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                        <td th:text="${log.actorEmail != null ? log.actorEmail : 'SYSTEM'}">SYSTEM</td>
+                        <td><span class="uf-text-safe" th:text="${log.action}">ACTION</span></td>
+                        <td><span class="uf-badge" th:classappend="${log.status}" th:text="${log.status}">SUCCESS</span></td>
+                        <td>
+                            <strong th:text="${log.entityName != null ? log.entityName : '-'}">-</strong>
+                            <div style="font-size:.78rem;color:#64748b" th:if="${log.entityId != null}" th:text="'ID: ' + ${log.entityId}">ID</div>
+                        </td>
+                        <td class="uf-text-safe" th:text="${log.description != null ? log.description : '-'}">-</td>
+                        <td class="uf-text-safe" th:text="${log.oldValue != null ? log.oldValue : '-'}">-</td>
+                        <td class="uf-text-safe" th:text="${log.newValue != null ? log.newValue : '-'}">-</td>
+                        <td class="uf-text-safe">
+                            <span th:text="${log.httpMethod != null ? log.httpMethod : '-'}">-</span>
+                            <span th:text="${log.requestUri != null ? log.requestUri : ''}"></span>
+                            <div style="font-size:.78rem;color:#64748b" th:text="${log.ipAddress != null ? log.ipAddress : '-'}">-</div>
+                        </td>
+                    </tr>
+                    <tr th:if="${logs == null || #lists.isEmpty(logs)}">
+                        <td colspan="9" style="text-align:center;padding:28px;color:#64748b">Aucun audit trouvé.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 </div>
+<script th:src="@{/js/pro-ui-fixes.js}"></script>
 </body>
 </html>
