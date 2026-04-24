@@ -3,6 +3,7 @@ package com.securityapp.gofundme.controllers;
 import com.securityapp.gofundme.model.User;
 import com.securityapp.gofundme.services.CampaignService;
 import com.securityapp.gofundme.services.UserService;
+import com.securityapp.gofundme.services.WithdrawalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -13,7 +14,10 @@ import java.math.BigDecimal;
 
 @Controller
 public class DashboardController {
-
+    
+    @Autowired
+private WithdrawalService withdrawalService;
+    
     @Autowired
     private CampaignService campaignService;
 
@@ -34,7 +38,7 @@ public class DashboardController {
         // Optionnels - si vous les utilisez dans le template
         model.addAttribute("totalDonated", BigDecimal.ZERO); // À calculer si vous avez un service de dons
         model.addAttribute("globalProgress", 0); // À calculer selon votre logique
-
+        model.addAttribute("availableBalance", withdrawalService.getAvailableBalance(user));
         return "dashboard"; // ou "user-Dashboard" selon votre fichier
     }
 }

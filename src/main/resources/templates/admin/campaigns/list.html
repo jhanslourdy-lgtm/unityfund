@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Campagnes')}"></head>
+<body><div class="admin-shell"><aside th:replace="~{admin/fragments/admin-layout :: sidebar('campaigns')}"></aside><main class="main">
+<div class="topbar"><div><h2>Gestion des campagnes</h2><p>Contrôler, suspendre ou supprimer les campagnes.</p></div></div>
+<section class="card table-card"><div class="table-head"><h3>Campagnes</h3><input class="search" type="search" placeholder="Rechercher..."></div>
+<table><thead><tr><th>ID</th><th>Image</th><th>Titre</th><th>Créateur</th><th>Catégorie</th><th>Objectif</th><th>Collecté</th><th>Statut</th><th>Actions</th></tr></thead>
+<tbody><tr th:each="c : ${campaigns}"><td th:text="${c.id}">1</td><td><img th:if="${c.imageUrl}" th:src="${c.imageUrl}" style="width:54px;height:42px;object-fit:cover;border-radius:10px"></td><td th:text="${c.title}">Titre</td><td th:text="${c.user != null ? c.user.email : 'N/A'}">email</td><td th:text="${c.category != null ? c.category.name : 'N/A'}">Catégorie</td><td th:text="${c.goalAmount}">0</td><td th:text="${c.currentAmount}">0</td><td><span class="badge" th:classappend="${c.status}" th:text="${c.status}">ACTIVE</span></td><td class="actions"><a class="btn btn-success" th:href="@{/admin/campaigns/status/{id}/ACTIVE(id=${c.id})}">Activer</a><a class="btn btn-warning" th:href="@{/admin/campaigns/status/{id}/SUSPENDED(id=${c.id})}">Suspendre</a><a class="btn btn-light" th:href="@{/campaigns/{id}(id=${c.id})}">Voir</a><a class="btn btn-danger" th:href="@{/admin/campaigns/delete/{id}(id=${c.id})}" onclick="return confirm('Supprimer cette campagne ?')">Supprimer</a></td></tr></tbody></table>
+</section></main></div></body></html>

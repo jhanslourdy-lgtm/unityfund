@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Tableau de bord')}"></head>
+<body>
+<div class="admin-shell">
+    <aside th:replace="~{admin/fragments/admin-layout :: sidebar('dashboard')}"></aside>
+    <main class="main">
+        <div class="topbar"><div><h2>Tableau de bord admin</h2><p>Vue globale sur l'activité de la plateforme.</p></div></div>
+        <section class="grid stats">
+            <div class="card stat"><div class="icon"><i class="fa-solid fa-users"></i></div><div class="value" th:text="${totalUsers}">0</div><div class="label">Utilisateurs</div></div>
+            <div class="card stat"><div class="icon"><i class="fa-solid fa-bullhorn"></i></div><div class="value" th:text="${totalCampaigns}">0</div><div class="label">Campagnes</div></div>
+            <div class="card stat"><div class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></div><div class="value" th:text="${totalDonations}">0</div><div class="label">Dons</div></div>
+            <div class="card stat"><div class="icon"><i class="fa-solid fa-layer-group"></i></div><div class="value" th:text="${totalCategories}">0</div><div class="label">Catégories</div></div>
+            <div class="card stat"><div class="icon"><i class="fa-solid fa-money-bill-transfer"></i></div><div class="value" th:text="${totalWithdrawals}">0</div><div class="label">Demandes de retrait</div></div>
+            <div class="card stat"><div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="value" th:text="${totalReports}">0</div><div class="label">Signalements</div></div>
+        </section>
+        <section class="card table-card">
+            <div class="table-head"><h3>Campagnes récentes</h3><a class="btn btn-light" th:href="@{/admin/campaigns}">Tout voir</a></div>
+            <table><thead><tr><th>ID</th><th>Titre</th><th>Créateur</th><th>Objectif</th><th>Collecté</th><th>Statut</th></tr></thead>
+                <tbody><tr th:each="c : ${recentCampaigns}"><td th:text="${c.id}">1</td><td th:text="${c.title}">Titre</td><td th:text="${c.user != null ? c.user.email : 'N/A'}">email</td><td th:text="${c.goalAmount}">0</td><td th:text="${c.currentAmount}">0</td><td><span class="badge" th:classappend="${c.status}" th:text="${c.status}">ACTIVE</span></td></tr></tbody>
+            </table>
+        </section>
+    </main>
+</div>
+</body>
+</html>

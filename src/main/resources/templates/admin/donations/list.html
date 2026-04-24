@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Dons')}"></head>
+<body><div class="admin-shell"><aside th:replace="~{admin/fragments/admin-layout :: sidebar('donations')}"></aside><main class="main">
+<div class="topbar"><div><h2>Gestion des dons</h2><p>Suivi global des contributions effectuées sur la plateforme.</p></div></div>
+<section class="card table-card"><div class="table-head"><h3>Dons</h3><input class="search" type="search" placeholder="Rechercher..."></div>
+<table><thead><tr><th>ID</th><th>Montant</th><th>Campagne</th><th>Donateur</th><th>Message</th><th>Date</th><th>Action</th></tr></thead>
+<tbody><tr th:each="d : ${donations}"><td th:text="${d.id}">1</td><td><strong th:text="${d.amount}">0</strong></td><td th:text="${d.campaign != null ? d.campaign.title : 'N/A'}">Campagne</td><td th:text="${d.donor != null ? d.donor.email : 'Anonyme'}">email</td><td th:text="${d.message ?: 'Aucun message'}">Message</td><td th:text="${d.createdAt}">date</td><td><a class="btn btn-danger" th:href="@{/admin/donations/delete/{id}(id=${d.id})}" onclick="return confirm('Supprimer ce don ?')">Supprimer</a></td></tr></tbody></table>
+</section></main></div></body></html>

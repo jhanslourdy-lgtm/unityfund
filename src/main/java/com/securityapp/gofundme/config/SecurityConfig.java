@@ -54,18 +54,35 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/campaign/*/donate", "/donation/**").authenticated()
                 .requestMatchers("/api/payments/create-intent").authenticated()
+                .requestMatchers("/withdrawals/**").authenticated()
                 .anyRequest().authenticated()
             )
             
             // Formulaire classique
-            .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/home", true)
-                .permitAll()
-            )
-            
-            // OAuth2 Google
+//            .formLogin(form -> form
+//                .loginPage("/login")
+//                .loginProcessingUrl("/login")
+//                .defaultSuccessUrl("/home", true)
+//                .permitAll()
+//            )
+//            
+                .formLogin(form -> form
+    .loginPage("/login")
+    .loginProcessingUrl("/login")
+    .successHandler((request, response, authentication) -> {
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (isAdmin) {
+            response.sendRedirect("/admin/dashboard");
+        } else {
+            response.sendRedirect("/home");
+        }
+    })
+    .permitAll()
+)
+// OAuth2 Google
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .successHandler(oAuth2SuccessHandler)

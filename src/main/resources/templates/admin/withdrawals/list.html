@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Retraits')}"></head>
+<body><div class="admin-shell"><aside th:replace="~{admin/fragments/admin-layout :: sidebar('withdrawals')}"></aside><main class="main">
+<div class="topbar"><div><h2>Demandes de retrait</h2><p>Approuver ou rejeter les retraits des créateurs.</p></div></div>
+<section class="card table-card"><div class="table-head"><h3>Retraits</h3><input class="search" type="search" placeholder="Rechercher..."></div>
+<table><thead><tr><th>ID</th><th>Utilisateur</th><th>Campagne</th><th>Montant</th><th>Méthode</th><th>Destination</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+<tbody><tr th:each="w : ${withdrawals}"><td th:text="${w.id}">1</td><td th:text="${w.user != null ? w.user.email : 'N/A'}">email</td><td th:text="${w.campaign != null ? w.campaign.title : 'N/A'}">campagne</td><td th:text="${w.amount}">0</td><td th:text="${w.method}">MONCASH</td><td><span th:text="${w.recipientPhone ?: w.bankAccountNumber ?: 'N/A'}">dest</span></td><td><span class="badge" th:classappend="${w.status}" th:text="${w.status}">PENDING</span></td><td th:text="${w.createdAt}">date</td><td class="actions"><a class="btn btn-success" th:href="@{/admin/withdrawals/approve/{id}(id=${w.id})}">Approuver</a><a class="btn btn-warning" th:href="@{/admin/withdrawals/reject/{id}(id=${w.id})}">Rejeter</a></td></tr></tbody></table>
+</section></main></div></body></html>
