@@ -1,10 +1,56 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Audit Logs')}"></head>
-<body><div class="admin-shell"><aside th:replace="~{admin/fragments/admin-layout :: sidebar('audit')}"></aside><main class="main">
-<div class="topbar"><div><h2>Audit des données</h2><p>Historique des actions importantes réalisées sur l'application.</p></div></div>
-<section class="card table-card"><div class="table-head"><h3>Journal d'audit</h3><input class="search" type="search" placeholder="Rechercher..."></div>
-<div class="table-scroll"><table><thead><tr><th>ID</th><th>Acteur</th><th>Action</th><th>Entité</th><th>ID Entité</th><th>Ancienne valeur</th><th>Nouvelle valeur</th><th>IP</th><th>Date</th></tr></thead>
-<tbody><tr th:each="log : ${logs}"><td th:text="${log.id}">1</td><td th:text="${log.actorEmail}">admin@email.com</td><td><span class="badge" th:text="${log.action}">UPDATE</span></td><td th:text="${log.entityName}">Campaign</td><td th:text="${log.entityId}">1</td><td th:text="${log.oldValue ?: 'N/A'}">old</td><td th:text="${log.newValue ?: 'N/A'}">new</td><td th:text="${log.ipAddress ?: 'N/A'}">ip</td><td th:text="${log.createdAt}">date</td></tr></tbody></table></div>
-<div class="empty" th:if="${#lists.isEmpty(logs)}">Aucune action enregistrée pour le moment.</div>
-</section></main></div></body></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit des activités</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111827}
+        .card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(15,23,42,.08)}
+        .top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+        h1{margin:0;font-size:24px}.table-wrap{overflow-x:auto}
+        table{width:100%;border-collapse:collapse;min-width:1150px}th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top;font-size:14px}th{background:#f9fafb;font-weight:700}.badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}.SUCCESS{background:#dcfce7;color:#166534}.FAILED{background:#fee2e2;color:#991b1b}.ATTEMPT{background:#dbeafe;color:#1e40af}.REMOVED,.CANCELLED{background:#fef3c7;color:#92400e}.small{font-size:12px;color:#6b7280}.details{max-width:280px;white-space:normal;word-break:break-word}.filters{display:flex;gap:10px;flex-wrap:wrap}.filters input,.filters select{padding:10px;border:1px solid #d1d5db;border-radius:10px}.filters button{padding:10px 14px;border:0;border-radius:10px;background:#0b4f9c;color:white;font-weight:700}
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="top">
+        <h1>Audit des activités</h1>
+        <form class="filters" th:action="@{/admin/audit-logs}" method="get">
+            <input name="actor" placeholder="Email utilisateur" th:value="${param.actor}">
+            <select name="status">
+                <option value="">Tous statuts</option>
+                <option value="ATTEMPT">Tentative</option>
+                <option value="SUCCESS">Succès</option>
+                <option value="FAILED">Échec</option>
+                <option value="REMOVED">Retiré</option>
+                <option value="CANCELLED">Annulé</option>
+            </select>
+            <button type="submit">Filtrer</button>
+        </form>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Date</th><th>Utilisateur</th><th>Action</th><th>Statut</th><th>Entité</th><th>Résumé</th><th>Route/IP</th><th>Erreur</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="log : ${logs}">
+                <td th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                <td><span th:text="${log.actorEmail}"></span><div class="small" th:if="${log.actorId != null}" th:text="'ID: ' + ${log.actorId}"></div></td>
+                <td th:text="${log.action}"></td>
+                <td><span class="badge" th:classappend="${log.status}" th:text="${log.status}"></span></td>
+                <td><span th:text="${log.entityName}"></span><div class="small" th:if="${log.entityId != null}" th:text="'ID: ' + ${log.entityId}"></div></td>
+                <td class="details"><strong th:text="${log.summary}"></strong><div class="small" th:if="${log.newValue != null}" th:text="${log.newValue}"></div></td>
+                <td class="details"><span th:text="${log.httpMethod}"></span> <span th:text="${log.requestUri}"></span><div class="small" th:text="${log.ipAddress}"></div></td>
+                <td class="details" th:text="${log.errorMessage}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(logs)}"><td colspan="8">Aucun audit trouvé.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
