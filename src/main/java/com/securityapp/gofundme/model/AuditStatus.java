@@ -2,8 +2,8 @@ package com.securityapp.gofundme.model;
 
 public enum AuditStatus {
     ATTEMPT,
-    SUCCESS,
     PENDING,
+    SUCCESS,
     FAILED,
     CANCELLED,
     REMOVED
