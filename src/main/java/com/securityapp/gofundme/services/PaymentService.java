@@ -31,6 +31,9 @@ public class PaymentService {
     
     @Autowired
     private CampaignRepository campaignRepository;
+
+    @Autowired
+    private AuditLogService auditLogService;
     
     @Value("${platform.fee.percentage:0.05}")
     private BigDecimal platformFeePct;
@@ -103,6 +106,29 @@ public class PaymentService {
         
         campaignRepository.save(campaign);
         paymentRepository.save(payment);
+
+        auditLogService.log(
+            "SYSTEM",
+            "PAYMENT_COMPLETED",
+            "Payment",
+            payment.getId(),
+            "PENDING",
+            "COMPLETED; amount=" + payment.getAmount()
+                + "; campaignId=" + campaign.getId()
+                + "; donationId=" + payment.getDonation().getId(),
+            null
+        );
+
+        auditLogService.log(
+            "SYSTEM",
+            "DONATION_CONFIRMED",
+            "Donation",
+            payment.getDonation().getId(),
+            null,
+            "amount=" + payment.getAmount()
+                + "; campaign=" + campaign.getTitle(),
+            null
+        );
     }
     
     private BigDecimal calculateProcessingFee(BigDecimal amount, PaymentMethod method) {

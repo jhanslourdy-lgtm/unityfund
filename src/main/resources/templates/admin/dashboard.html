@@ -16,9 +16,9 @@
         </section>
         <section class="card table-card">
             <div class="table-head"><h3>Campagnes récentes</h3><a class="btn btn-light" th:href="@{/admin/campaigns}">Tout voir</a></div>
-            <table><thead><tr><th>ID</th><th>Titre</th><th>Créateur</th><th>Objectif</th><th>Collecté</th><th>Statut</th></tr></thead>
+            <div class="table-scroll"><table><thead><tr><th>ID</th><th>Titre</th><th>Créateur</th><th>Objectif</th><th>Collecté</th><th>Statut</th></tr></thead>
                 <tbody><tr th:each="c : ${recentCampaigns}"><td th:text="${c.id}">1</td><td th:text="${c.title}">Titre</td><td th:text="${c.user != null ? c.user.email : 'N/A'}">email</td><td th:text="${c.goalAmount}">0</td><td th:text="${c.currentAmount}">0</td><td><span class="badge" th:classappend="${c.status}" th:text="${c.status}">ACTIVE</span></td></tr></tbody>
-            </table>
+            </table></div>
         </section>
     </main>
 </div>
