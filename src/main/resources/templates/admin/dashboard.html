@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/admin-layout :: head('Admin - Tableau de bord')}"></head>
+    <head th:replace="~{admin/fragments/admin-layout :: head('Admin - Tableau de bord')}">
+        <link rel="stylesheet" th:href="@{/css/admin-responsive.css}">
+<script th:src="@{/js/admin-responsive.js}" defer></script>
+    </head>
 <body>
 <div class="admin-shell">
     <aside th:replace="~{admin/fragments/admin-layout :: sidebar('dashboard')}"></aside>
@@ -13,12 +16,6 @@
             <div class="card stat"><div class="icon"><i class="fa-solid fa-layer-group"></i></div><div class="value" th:text="${totalCategories}">0</div><div class="label">Catégories</div></div>
             <div class="card stat"><div class="icon"><i class="fa-solid fa-money-bill-transfer"></i></div><div class="value" th:text="${totalWithdrawals}">0</div><div class="label">Demandes de retrait</div></div>
             <div class="card stat"><div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="value" th:text="${totalReports}">0</div><div class="label">Signalements</div></div>
-        </section>
-        <section class="card table-card">
-            <div class="table-head"><h3>Campagnes récentes</h3><a class="btn btn-light" th:href="@{/admin/campaigns}">Tout voir</a></div>
-            <div class="table-scroll"><table><thead><tr><th>ID</th><th>Titre</th><th>Créateur</th><th>Objectif</th><th>Collecté</th><th>Statut</th></tr></thead>
-                <tbody><tr th:each="c : ${recentCampaigns}"><td th:text="${c.id}">1</td><td th:text="${c.title}">Titre</td><td th:text="${c.user != null ? c.user.email : 'N/A'}">email</td><td th:text="${c.goalAmount}">0</td><td th:text="${c.currentAmount}">0</td><td><span class="badge" th:classappend="${c.status}" th:text="${c.status}">ACTIVE</span></td></tr></tbody>
-            </table></div>
         </section>
     </main>
 </div>

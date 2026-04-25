@@ -1,11 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.securityapp.gofundme.services;
 
 import com.securityapp.gofundme.dto.CreatorBalance;
-import com.securityapp.gofundme.model.*;
+import com.securityapp.gofundme.model.PaymentMethod;
+import com.securityapp.gofundme.model.User;
+import com.securityapp.gofundme.model.Withdrawal;
+import com.securityapp.gofundme.model.WithdrawalStatus;
 import com.securityapp.gofundme.repositories.WithdrawalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,33 +27,52 @@ public class WithdrawalService {
     @Value("${withdrawal.min.amount:10.00}")
     private BigDecimal minWithdrawalAmount;
 
-    /**
-     * Calcule le solde réellement disponible = gains - retraits déjà demandés
-     */
+    public BigDecimal getMinWithdrawalAmount() {
+        return minWithdrawalAmount;
+    }
+
     public BigDecimal getAvailableBalance(User user) {
         CreatorBalance balance = financialService.calculateBalance(user);
-        BigDecimal alreadyWithdrawn = withdrawalRepository.sumWithdrawnByUser(user);
-        return balance.getAvailable().subtract(alreadyWithdrawn);
+        BigDecimal alreadyReservedOrPaid = withdrawalRepository.sumWithdrawnByUserAndStatuses(
+                user,
+                List.of(WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING, WithdrawalStatus.COMPLETED)
+        );
+
+        BigDecimal available = balance.getAvailable().subtract(alreadyReservedOrPaid);
+        return available.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : available;
     }
 
     @Transactional
-    public Withdrawal requestWithdrawal(User user, BigDecimal amount, PaymentMethod method,
-                                        String recipientPhone, String bankName,
-                                        String bankAccountNumber, String bankAccountName) {
-        
-        // Vérifications
+    public Withdrawal requestWithdrawal(User user,
+                                        BigDecimal amount,
+                                        PaymentMethod method,
+                                        String recipientPhone,
+                                        String bankName,
+                                        String bankAccountNumber,
+                                        String bankAccountName) {
+        if (user == null) {
+            throw new RuntimeException("Utilisateur non authentifié.");
+        }
+
         if (amount == null || amount.compareTo(minWithdrawalAmount) < 0) {
-            throw new RuntimeException("Le montant minimum de retrait est de " + minWithdrawalAmount + " $");
+            throw new RuntimeException("Le montant minimum de retrait est de " + minWithdrawalAmount + " $.");
+        }
+
+        if (method == null) {
+            throw new RuntimeException("Veuillez choisir une méthode de retrait.");
+        }
+
+        if (method != PaymentMethod.MONCASH && method != PaymentMethod.BANK_TRANSFER) {
+            throw new RuntimeException("Méthode de retrait non supportée. Utilisez MonCash ou virement bancaire.");
         }
 
         BigDecimal available = getAvailableBalance(user);
         if (amount.compareTo(available) > 0) {
-            throw new RuntimeException("Solde insuffisant. Disponible : " + available + " $");
+            throw new RuntimeException("Solde insuffisant. Disponible : " + available + " $.");
         }
 
-        // Vérifier qu'il n'a pas déjà une demande en cours
         if (withdrawalRepository.existsByUserAndStatus(user, WithdrawalStatus.PENDING)) {
-            throw new RuntimeException("Vous avez déjà une demande de retrait en attente.");
+            throw new RuntimeException("Vous avez déjà une demande de retrait en attente. Annulez-la ou attendez son traitement.");
         }
 
         Withdrawal withdrawal = new Withdrawal();
@@ -64,19 +82,25 @@ public class WithdrawalService {
         withdrawal.setStatus(WithdrawalStatus.PENDING);
 
         if (method == PaymentMethod.MONCASH) {
-            if (recipientPhone == null || recipientPhone.isBlank()) {
-                throw new RuntimeException("Le numéro de téléphone est requis pour MonCash.");
+            String phone = normalize(recipientPhone);
+            if (phone == null) {
+                throw new RuntimeException("Le numéro de téléphone MonCash est requis.");
             }
-            withdrawal.setRecipientPhone(recipientPhone);
-        } else {
-            if (bankName == null || bankName.isBlank() ||
-                bankAccountNumber == null || bankAccountNumber.isBlank() ||
-                bankAccountName == null || bankAccountName.isBlank()) {
+            withdrawal.setRecipientPhone(phone);
+        }
+
+        if (method == PaymentMethod.BANK_TRANSFER) {
+            String cleanBankName = normalize(bankName);
+            String cleanAccountNumber = normalize(bankAccountNumber);
+            String cleanAccountName = normalize(bankAccountName);
+
+            if (cleanBankName == null || cleanAccountNumber == null || cleanAccountName == null) {
                 throw new RuntimeException("Les informations bancaires sont incomplètes.");
             }
-            withdrawal.setBankName(bankName);
-            withdrawal.setBankAccountNumber(bankAccountNumber);
-            withdrawal.setBankAccountName(bankAccountName);
+
+            withdrawal.setBankName(cleanBankName);
+            withdrawal.setBankAccountNumber(cleanAccountNumber);
+            withdrawal.setBankAccountName(cleanAccountName);
         }
 
         return withdrawalRepository.save(withdrawal);
@@ -91,31 +115,55 @@ public class WithdrawalService {
     }
 
     @Transactional
+    public void cancelWithdrawal(User user, Long withdrawalId) {
+        Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
+                .orElseThrow(() -> new RuntimeException("Demande de retrait introuvable."));
+
+        if (!withdrawal.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à annuler cette demande.");
+        }
+
+        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
+            throw new RuntimeException("Seules les demandes en attente peuvent être annulées.");
+        }
+
+        withdrawalRepository.delete(withdrawal);
+    }
+
+    @Transactional
     public void approveWithdrawal(Long withdrawalId) {
-        Withdrawal w = withdrawalRepository.findById(withdrawalId)
-                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
-        
-        if (w.getStatus() != WithdrawalStatus.PENDING) {
+        Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée."));
+
+        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
             throw new RuntimeException("Cette demande a déjà été traitée.");
         }
 
-        w.setStatus(WithdrawalStatus.COMPLETED);
-        w.setProcessedAt(LocalDateTime.now());
-        withdrawalRepository.save(w);
+        withdrawal.setStatus(WithdrawalStatus.COMPLETED);
+        withdrawal.setProcessedAt(LocalDateTime.now());
+        withdrawalRepository.save(withdrawal);
     }
 
     @Transactional
     public void rejectWithdrawal(Long withdrawalId, String reason) {
-        Withdrawal w = withdrawalRepository.findById(withdrawalId)
-                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
-        
-        if (w.getStatus() != WithdrawalStatus.PENDING) {
+        Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée."));
+
+        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
             throw new RuntimeException("Cette demande a déjà été traitée.");
         }
 
-        w.setStatus(WithdrawalStatus.REJECTED);
-        w.setRejectionReason(reason);
-        w.setProcessedAt(LocalDateTime.now());
-        withdrawalRepository.save(w);
+        withdrawal.setStatus(WithdrawalStatus.REJECTED);
+        withdrawal.setRejectionReason(normalize(reason) == null ? "Rejeté par l'administrateur." : reason.trim());
+        withdrawal.setProcessedAt(LocalDateTime.now());
+        withdrawalRepository.save(withdrawal);
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

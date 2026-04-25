@@ -1,0 +1,43 @@
+/* Drop-in responsive CSS pour les pages admin UnityFund. N'altère pas la logique, uniquement l'affichage. */
+:root { --admin-sidebar-width: 280px; }
+.admin-shell, .admin-layout, .admin-page { min-width: 0; }
+.admin-main, main, .content, .admin-content { min-width: 0; overflow-x: hidden; }
+.admin-card, .card, .panel { max-width: 100%; }
+.table-responsive, .admin-table-wrap, .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { max-width: 100%; }
+.admin-actions, .actions, .action-buttons { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.admin-actions a, .admin-actions button, .actions a, .actions button, .action-buttons a, .action-buttons button { white-space: nowrap; }
+
+.admin-menu-toggle { display: none; border: 0; border-radius: 12px; padding: .75rem .9rem; background: #0f172a; color: #fff; font-weight: 800; cursor: pointer; }
+.admin-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, .48); z-index: 48; }
+
+@media (max-width: 900px) {
+  body.admin-sidebar-open { overflow: hidden; }
+  .admin-menu-toggle { display: inline-flex; align-items: center; gap: .5rem; }
+  aside, .sidebar, .admin-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: min(82vw, var(--admin-sidebar-width)) !important;
+    max-width: var(--admin-sidebar-width) !important;
+    height: 100vh !important;
+    z-index: 50 !important;
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    overflow-y: auto;
+  }
+  body.admin-sidebar-open aside,
+  body.admin-sidebar-open .sidebar,
+  body.admin-sidebar-open .admin-sidebar { transform: translateX(0); }
+  body.admin-sidebar-open .admin-backdrop { display: block; }
+  main, .admin-main, .content, .admin-content { margin-left: 0 !important; width: 100% !important; padding-left: 1rem !important; padding-right: 1rem !important; }
+  .admin-header, header { flex-wrap: wrap; gap: .75rem; }
+  .stats-grid, .dashboard-grid, .admin-stats { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.5rem !important; line-height: 1.25 !important; }
+  .admin-card, .card, .panel { padding: 1rem !important; }
+  .admin-actions, .actions, .action-buttons { flex-direction: column; align-items: stretch; }
+  .admin-actions a, .admin-actions button, .actions a, .actions button, .action-buttons a, .action-buttons button { width: 100%; text-align: center; justify-content: center; }
+  table th, table td { padding: .75rem !important; }
+}

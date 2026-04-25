@@ -5,123 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Demande de retrait | UnityFund</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&display=swap" rel="stylesheet"/>
     <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#10b77f",
-                        "background-light": "#f6f8f7",
-                        "background-dark": "#10221c",
-                    }
-                }
-            }
-        }
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { primary: "#10b77f", "background-light": "#f6f8f7", "background-dark": "#10221c" }, fontFamily: { display: ["Inter", "sans-serif"] } } } }
     </script>
-    <link rel="stylesheet" th:href="@{/css/ux-global.css}" href="/css/ux-global.css">
 </head>
 <body class="bg-background-light dark:bg-background-dark min-h-screen font-display text-slate-900 dark:text-slate-100">
-    <div class="max-w-2xl mx-auto px-4 py-12">
-        <a th:href="@{/dashboard}" class="text-sm text-slate-500 hover:text-primary flex items-center gap-1 mb-6">
-            <span class="material-symbols-outlined text-sm">arrow_back</span>
-            Retour au dashboard
-        </a>
+<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+    <a th:href="@{/withdrawals}" class="text-sm text-slate-500 hover:text-primary inline-flex items-center gap-1 mb-6">
+        <span class="material-symbols-outlined text-sm">arrow_back</span>
+        Retour aux retraits
+    </a>
 
-        <h1 class="text-3xl font-bold mb-2">Demande de retrait</h1>
-        <p class="text-slate-500 mb-8">Solde disponible : <span class="font-bold text-primary" th:text="${#numbers.formatDecimal(availableBalance, 1, 2, 'WHITESPACE') + ' $'}">0.00 $</span></p>
+    <h1 class="text-2xl sm:text-3xl font-black mb-2">Demande de retrait</h1>
+    <p class="text-slate-500 mb-8">Solde disponible : <span class="font-bold text-primary" th:text="${#numbers.formatDecimal(availableBalance, 1, 2, 'WHITESPACE') + ' $'}">0.00 $</span></p>
 
-        <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" th:text="${error}"></div>
+    <div th:if="${error}" class="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg" th:text="${error}"></div>
 
-        <form th:action="@{/withdrawals/request}" method="POST" class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-8 space-y-6">
-            
+    <form th:action="@{/withdrawals/request}" method="POST" class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-5 sm:p-8 space-y-6">
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de retrait</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="cursor-pointer">
+                    <input type="radio" name="method" value="MONCASH" checked onchange="toggleMethod('MONCASH')" class="peer hidden"/>
+                    <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
+                        <span class="material-symbols-outlined text-2xl mb-1 text-slate-400">phone_iphone</span>
+                        <p class="text-sm font-bold">MonCash</p>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="method" value="BANK_TRANSFER" onchange="toggleMethod('BANK_TRANSFER')" class="peer hidden"/>
+                    <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
+                        <span class="material-symbols-outlined text-2xl mb-1 text-slate-400">account_balance</span>
+                        <p class="text-sm font-bold">Virement bancaire</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Montant à retirer (USD)</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">attach_money</span>
+                <input type="number" name="amount" step="0.01" th:min="${minAmount}" th:max="${availableBalance}" required
+                       class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none font-bold"
+                       placeholder="100.00"/>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Minimum <span th:text="${#numbers.formatDecimal(minAmount, 1, 2, 'WHITESPACE') + ' $'}">10 $</span> • Maximum <span th:text="${#numbers.formatDecimal(availableBalance, 1, 2, 'WHITESPACE') + ' $'}">0 $</span></p>
+        </div>
+
+        <div id="moncash-fields" class="space-y-4">
             <div>
-                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Méthode de retrait</label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="cursor-pointer">
-                        <input type="radio" name="method" value="MONCASH" checked onchange="toggleMethod('MONCASH')" class="peer hidden"/>
-                        <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
-                            <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">phone_iphone</span>
-                            <p class="text-sm font-bold">MonCash</p>
-                        </div>
-                    </label>
-                    <label class="cursor-pointer">
-                        <input type="radio" name="method" value="BANK_TRANSFER" onchange="toggleMethod('BANK')" class="peer hidden"/>
-                        <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
-                            <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">account_balance</span>
-                            <p class="text-sm font-bold">Virement bancaire</p>
-                        </div>
-                    </label>
-                </div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Numéro MonCash</label>
+                <input type="tel" name="recipientPhone" required
+                       class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none"
+                       placeholder="Ex: +509 37 00 00 00"/>
             </div>
+        </div>
 
+        <div id="bank-fields" class="space-y-4 hidden">
             <div>
-                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Montant à retirer (USD)</label>
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">attach_money</span>
-                    <input type="number" name="amount" step="0.01" min="10" required
-                           th:max="${availableBalance}"
-                           class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none font-bold"
-                           placeholder="100.00"/>
-                </div>
-                <p class="text-xs text-slate-500 mt-1">Minimum 10 $ • Maximum <span th:text="${#numbers.formatDecimal(availableBalance, 1, 2, 'WHITESPACE') + ' $'}">0 $</span></p>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nom de la banque</label>
+                <input type="text" name="bankName" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none" placeholder="Ex: Sogebank"/>
             </div>
-
-            <!-- MonCash -->
-            <div id="moncash-fields" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Numéro MonCash</label>
-                    <input type="tel" name="recipientPhone" 
-                           class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none"
-                           placeholder="Ex: +509 37 00 00 00"/>
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Numéro de compte</label>
+                <input type="text" name="bankAccountNumber" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none" placeholder="XXXX-XXXX-XXXX"/>
             </div>
-
-            <!-- Bank -->
-            <div id="bank-fields" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nom de la banque</label>
-                    <input type="text" name="bankName" 
-                           class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none"
-                           placeholder="Ex: Sogebank"/>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Numéro de compte</label>
-                    <input type="text" name="bankAccountNumber" 
-                           class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none"
-                           placeholder="XXXX-XXXX-XXXX"/>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Titulaire du compte</label>
-                    <input type="text" name="bankAccountName" 
-                           class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none"
-                           placeholder="Nom complet"/>
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Titulaire du compte</label>
+                <input type="text" name="bankAccountName" class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none" placeholder="Nom complet"/>
             </div>
+        </div>
 
-            <div class="pt-4 flex gap-4">
-                <a th:href="@{/dashboard}" class="flex-1 py-3 text-center rounded-lg font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
-                    Annuler
-                </a>
-                <button type="submit" class="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-all shadow-lg shadow-primary/20">
-                    Confirmer la demande
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <script>
-        function toggleMethod(method) {
-            document.getElementById('moncash-fields').classList.toggle('hidden', method !== 'MONCASH');
-            document.getElementById('bank-fields').classList.toggle('hidden', method !== 'BANK');
-            
-            // Toggle required attributes
-            document.querySelector('[name="recipientPhone"]').required = (method === 'MONCASH');
-            document.querySelectorAll('#bank-fields input').forEach(i => i.required = (method === 'BANK'));
-        }
-    </script>
-<script th:src="@{/js/ux-global.js}" src="/js/ux-global.js"></script>
+        <div class="pt-4 flex flex-col sm:flex-row gap-4">
+            <a th:href="@{/withdrawals}" class="flex-1 py-3 text-center rounded-lg font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">Annuler</a>
+            <button type="submit" class="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg transition-all shadow-lg shadow-primary/20">Confirmer la demande</button>
+        </div>
+    </form>
+</div>
+<script>
+    function toggleMethod(method) {
+        const moncash = document.getElementById('moncash-fields');
+        const bank = document.getElementById('bank-fields');
+        moncash.classList.toggle('hidden', method !== 'MONCASH');
+        bank.classList.toggle('hidden', method !== 'BANK_TRANSFER');
+        document.querySelector('[name="recipientPhone"]').required = method === 'MONCASH';
+        document.querySelectorAll('#bank-fields input').forEach(input => input.required = method === 'BANK_TRANSFER');
+    }
+    toggleMethod('MONCASH');
+</script>
 </body>
 </html>
