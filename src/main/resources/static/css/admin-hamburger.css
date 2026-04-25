@@ -1,0 +1,75 @@
+/* Admin responsive hamburger. N'altère pas le design desktop existant. */
+.admin-mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 1100;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 12px;
+    background: #10b77f;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 800;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, .18);
+    cursor: pointer;
+}
+
+.admin-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .48);
+    z-index: 999;
+}
+
+@media (max-width: 768px) {
+    .admin-mobile-toggle { display: inline-flex; align-items: center; justify-content: center; }
+
+    .admin-sidebar,
+    aside.admin-sidebar,
+    .sidebar,
+    aside.sidebar,
+    aside[class*="sidebar"],
+    .admin-layout aside,
+    body > aside {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 280px !important;
+        max-width: 86vw !important;
+        height: 100vh !important;
+        z-index: 1000 !important;
+        transform: translateX(-105%) !important;
+        transition: transform .25s ease !important;
+        overflow-y: auto !important;
+    }
+
+    body.admin-menu-open .admin-sidebar,
+    body.admin-menu-open aside.admin-sidebar,
+    body.admin-menu-open .sidebar,
+    body.admin-menu-open aside.sidebar,
+    body.admin-menu-open aside[class*="sidebar"],
+    body.admin-menu-open .admin-layout aside,
+    body.admin-menu-open > aside {
+        transform: translateX(0) !important;
+    }
+
+    body.admin-menu-open .admin-backdrop { display: block; }
+
+    main,
+    .admin-main,
+    .content,
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    table { min-width: 760px; }
+    .table-responsive, .overflow-x-auto { overflow-x: auto !important; }
+}

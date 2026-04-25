@@ -1,10 +1,9 @@
 package com.securityapp.gofundme.services;
 
 import com.securityapp.gofundme.dto.CreatorBalance;
-import com.securityapp.gofundme.model.PaymentMethod;
-import com.securityapp.gofundme.model.User;
-import com.securityapp.gofundme.model.Withdrawal;
-import com.securityapp.gofundme.model.WithdrawalStatus;
+import com.securityapp.gofundme.model.*;
+import com.securityapp.gofundme.repositories.CampaignRepository;
+import com.securityapp.gofundme.repositories.PaymentRepository;
 import com.securityapp.gofundme.repositories.WithdrawalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,86 +23,111 @@ public class WithdrawalService {
     @Autowired
     private FinancialService financialService;
 
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private CampaignRepository campaignRepository;
+
     @Value("${withdrawal.min.amount:10.00}")
     private BigDecimal minWithdrawalAmount;
 
-    public BigDecimal getMinWithdrawalAmount() {
-        return minWithdrawalAmount;
-    }
-
     public BigDecimal getAvailableBalance(User user) {
         CreatorBalance balance = financialService.calculateBalance(user);
-        BigDecimal alreadyReservedOrPaid = withdrawalRepository.sumWithdrawnByUserAndStatuses(
-                user,
-                List.of(WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING, WithdrawalStatus.COMPLETED)
-        );
+        BigDecimal alreadyWithdrawn = withdrawalRepository.sumWithdrawnByUser(user);
+        BigDecimal available = balance.getAvailable().subtract(alreadyWithdrawn);
+        return available.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : available;
+    }
 
-        BigDecimal available = balance.getAvailable().subtract(alreadyReservedOrPaid);
+    public BigDecimal getAvailableBalanceForCampaign(Campaign campaign) {
+        BigDecimal receivedNet = paymentRepository.sumNetAmountByCampaignAndStatus(campaign, PaymentStatus.COMPLETED);
+        BigDecimal alreadyWithdrawn = withdrawalRepository.sumWithdrawnByCampaign(campaign);
+        BigDecimal available = receivedNet.subtract(alreadyWithdrawn);
         return available.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : available;
     }
 
     @Transactional
     public Withdrawal requestWithdrawal(User user,
+                                        Long campaignId,
                                         BigDecimal amount,
                                         PaymentMethod method,
                                         String recipientPhone,
                                         String bankName,
                                         String bankAccountNumber,
                                         String bankAccountName) {
-        if (user == null) {
-            throw new RuntimeException("Utilisateur non authentifié.");
+
+        Campaign campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new RuntimeException("Campagne introuvable."));
+
+        if (campaign.getUser() == null || !campaign.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Vous ne pouvez retirer que les fonds de vos propres campagnes.");
+        }
+
+        if (campaign.getStatus() != CampaignStatus.ACTIVE && campaign.getStatus() != CampaignStatus.COMPLETED) {
+            throw new RuntimeException("Cette campagne ne permet pas de demande de retrait.");
         }
 
         if (amount == null || amount.compareTo(minWithdrawalAmount) < 0) {
-            throw new RuntimeException("Le montant minimum de retrait est de " + minWithdrawalAmount + " $.");
+            throw new RuntimeException("Le montant minimum de retrait est de " + minWithdrawalAmount + " $");
         }
 
-        if (method == null) {
-            throw new RuntimeException("Veuillez choisir une méthode de retrait.");
-        }
-
-        if (method != PaymentMethod.MONCASH && method != PaymentMethod.BANK_TRANSFER) {
-            throw new RuntimeException("Méthode de retrait non supportée. Utilisez MonCash ou virement bancaire.");
-        }
-
-        BigDecimal available = getAvailableBalance(user);
+        BigDecimal available = getAvailableBalanceForCampaign(campaign);
         if (amount.compareTo(available) > 0) {
-            throw new RuntimeException("Solde insuffisant. Disponible : " + available + " $.");
+            throw new RuntimeException("Solde insuffisant pour cette campagne. Disponible : " + available + " $");
         }
 
-        if (withdrawalRepository.existsByUserAndStatus(user, WithdrawalStatus.PENDING)) {
-            throw new RuntimeException("Vous avez déjà une demande de retrait en attente. Annulez-la ou attendez son traitement.");
+        if (withdrawalRepository.existsByCampaignAndStatus(campaign, WithdrawalStatus.PENDING)) {
+            throw new RuntimeException("Cette campagne a déjà une demande de retrait en attente.");
         }
 
         Withdrawal withdrawal = new Withdrawal();
         withdrawal.setUser(user);
+        withdrawal.setCampaign(campaign);
         withdrawal.setAmount(amount);
         withdrawal.setMethod(method);
         withdrawal.setStatus(WithdrawalStatus.PENDING);
 
         if (method == PaymentMethod.MONCASH) {
-            String phone = normalize(recipientPhone);
-            if (phone == null) {
-                throw new RuntimeException("Le numéro de téléphone MonCash est requis.");
+            if (recipientPhone == null || recipientPhone.isBlank()) {
+                throw new RuntimeException("Le numéro de téléphone est requis pour MonCash.");
             }
-            withdrawal.setRecipientPhone(phone);
-        }
-
-        if (method == PaymentMethod.BANK_TRANSFER) {
-            String cleanBankName = normalize(bankName);
-            String cleanAccountNumber = normalize(bankAccountNumber);
-            String cleanAccountName = normalize(bankAccountName);
-
-            if (cleanBankName == null || cleanAccountNumber == null || cleanAccountName == null) {
+            withdrawal.setRecipientPhone(recipientPhone.trim());
+        } else if (method == PaymentMethod.BANK_TRANSFER) {
+            if (bankName == null || bankName.isBlank()
+                    || bankAccountNumber == null || bankAccountNumber.isBlank()
+                    || bankAccountName == null || bankAccountName.isBlank()) {
                 throw new RuntimeException("Les informations bancaires sont incomplètes.");
             }
-
-            withdrawal.setBankName(cleanBankName);
-            withdrawal.setBankAccountNumber(cleanAccountNumber);
-            withdrawal.setBankAccountName(cleanAccountName);
+            withdrawal.setBankName(bankName.trim());
+            withdrawal.setBankAccountNumber(bankAccountNumber.trim());
+            withdrawal.setBankAccountName(bankAccountName.trim());
+        } else {
+            throw new RuntimeException("Méthode de retrait non supportée.");
         }
 
-        return withdrawalRepository.save(withdrawal);
+        Withdrawal saved = withdrawalRepository.save(withdrawal);
+
+        // Règle métier demandée : dès qu'un retrait est demandé, la cagnotte ne reste plus active.
+        // Elle n'apparaîtra donc plus comme une campagne ouverte à la collecte.
+        campaign.setStatus(CampaignStatus.COMPLETED);
+        campaignRepository.save(campaign);
+
+        return saved;
+    }
+
+    /** Compatibilité avec les anciens appels sans campaignId. */
+    @Transactional
+    public Withdrawal requestWithdrawal(User user, BigDecimal amount, PaymentMethod method,
+                                        String recipientPhone, String bankName,
+                                        String bankAccountNumber, String bankAccountName) {
+        List<Campaign> campaigns = campaignRepository.findByUser(user);
+        Campaign firstEligible = campaigns.stream()
+                .filter(c -> getAvailableBalanceForCampaign(c).compareTo(minWithdrawalAmount) >= 0)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Aucune campagne ne possède un solde retirable."));
+
+        return requestWithdrawal(user, firstEligible.getId(), amount, method, recipientPhone,
+                bankName, bankAccountNumber, bankAccountName);
     }
 
     public List<Withdrawal> getUserWithdrawals(User user) {
@@ -115,55 +139,37 @@ public class WithdrawalService {
     }
 
     @Transactional
-    public void cancelWithdrawal(User user, Long withdrawalId) {
-        Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
-                .orElseThrow(() -> new RuntimeException("Demande de retrait introuvable."));
-
-        if (!withdrawal.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Vous n'êtes pas autorisé à annuler cette demande.");
-        }
-
-        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
-            throw new RuntimeException("Seules les demandes en attente peuvent être annulées.");
-        }
-
-        withdrawalRepository.delete(withdrawal);
-    }
-
-    @Transactional
     public void approveWithdrawal(Long withdrawalId) {
-        Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
-                .orElseThrow(() -> new RuntimeException("Demande non trouvée."));
+        Withdrawal w = withdrawalRepository.findById(withdrawalId)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
 
-        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
+        if (w.getStatus() != WithdrawalStatus.PENDING) {
             throw new RuntimeException("Cette demande a déjà été traitée.");
         }
 
-        withdrawal.setStatus(WithdrawalStatus.COMPLETED);
-        withdrawal.setProcessedAt(LocalDateTime.now());
-        withdrawalRepository.save(withdrawal);
+        w.setStatus(WithdrawalStatus.COMPLETED);
+        w.setProcessedAt(LocalDateTime.now());
+        withdrawalRepository.save(w);
     }
 
     @Transactional
     public void rejectWithdrawal(Long withdrawalId, String reason) {
-        Withdrawal withdrawal = withdrawalRepository.findById(withdrawalId)
-                .orElseThrow(() -> new RuntimeException("Demande non trouvée."));
+        Withdrawal w = withdrawalRepository.findById(withdrawalId)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
 
-        if (withdrawal.getStatus() != WithdrawalStatus.PENDING) {
+        if (w.getStatus() != WithdrawalStatus.PENDING) {
             throw new RuntimeException("Cette demande a déjà été traitée.");
         }
 
-        withdrawal.setStatus(WithdrawalStatus.REJECTED);
-        withdrawal.setRejectionReason(normalize(reason) == null ? "Rejeté par l'administrateur." : reason.trim());
-        withdrawal.setProcessedAt(LocalDateTime.now());
-        withdrawalRepository.save(withdrawal);
-    }
+        w.setStatus(WithdrawalStatus.REJECTED);
+        w.setRejectionReason(reason);
+        w.setProcessedAt(LocalDateTime.now());
+        withdrawalRepository.save(w);
 
-    private String normalize(String value) {
-        if (value == null) {
-            return null;
+        // Si le retrait est rejeté, on peut rouvrir la campagne.
+        if (w.getCampaign() != null && w.getCampaign().getStatus() == CampaignStatus.COMPLETED) {
+            w.getCampaign().setStatus(CampaignStatus.ACTIVE);
+            campaignRepository.save(w.getCampaign());
         }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
     }
 }
