@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.securityapp.gofundme.model;
 
 import jakarta.persistence.Column;
@@ -12,17 +8,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import com.securityapp.gofundme.model.Role;
 import java.time.LocalDateTime;
 
-/**
- *
- * @author Handy
- */
 @Entity
 @Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,7 +22,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String password; // Sera stocké hashé via BCrypt
+    private String password;
 
     @Column(nullable = false)
     private String firstName;
@@ -40,44 +31,39 @@ public class User {
     private String lastName;
 
     @Enumerated(EnumType.STRING)
-    private Role role; // ex: ROLE_USER, ROLE_ADMIN
-    
+    private Role role;
+
     @Column(nullable = false)
-private boolean emailVerified = false;
+    private boolean emailVerified = false;
 
-private String verificationCode;
+    private String verificationCode;
 
-private java.time.LocalDateTime verificationCodeExpiry;
+    private LocalDateTime verificationCodeExpiry;
 
-@Column(length = 64)
+    @Column(length = 64)
     private String resetToken;
-    
+
     private LocalDateTime resetTokenExpiry;
-    // Getters et Setters (ou @Data avec Lombok)
 
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
+    @Column(length = 2000)
+    private String bio;
 
-    public void setVerificationCode(String verificationCode) {
-        this.verificationCode = verificationCode;
-    }
+    private String profileImageUrl;
 
-    public void setVerificationCodeExpiry(LocalDateTime verificationCodeExpiry) {
-        this.verificationCodeExpiry = verificationCodeExpiry;
-    }
+    private String phone;
 
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
+    private String website;
 
-    public String getVerificationCode() {
-        return verificationCode;
-    }
+    private String country;
 
-    public LocalDateTime getVerificationCodeExpiry() {
-        return verificationCodeExpiry;
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    private String providerId;
+
+    @Column(nullable = false)
+    private boolean profileCompleted = true;
 
     public Long getId() {
         return id;
@@ -103,6 +89,58 @@ private java.time.LocalDateTime verificationCodeExpiry;
         return role;
     }
 
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public LocalDateTime getVerificationCodeExpiry() {
+        return verificationCodeExpiry;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public LocalDateTime getResetTokenExpiry() {
+        return resetTokenExpiry;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public boolean isProfileCompleted() {
+        return profileCompleted;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -126,27 +164,56 @@ private java.time.LocalDateTime verificationCodeExpiry;
     public void setRole(Role role) {
         this.role = role;
     }
-    public String getResetToken() { return resetToken; }
-    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
-    public LocalDateTime getResetTokenExpiry() { return resetTokenExpiry; }
-    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
-    @Column(length = 2000)
-private String bio;
 
-private String profileImageUrl;
-private String phone;
-private String website;
-private String country; // ou city selon ta préférence
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
 
-// Getters & Setters
-public String getBio() { return bio; }
-public void setBio(String bio) { this.bio = bio; }
-public String getProfileImageUrl() { return profileImageUrl; }
-public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
-public String getPhone() { return phone; }
-public void setPhone(String phone) { this.phone = phone; }
-public String getWebsite() { return website; }
-public void setWebsite(String website) { this.website = website; }
-public String getCountry() { return country; }
-public void setCountry(String country) { this.country = country; }  
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
+    }
+
+    public void setVerificationCodeExpiry(LocalDateTime verificationCodeExpiry) {
+        this.verificationCodeExpiry = verificationCodeExpiry;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) {
+        this.resetTokenExpiry = resetTokenExpiry;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public void setProvider(AuthProvider provider) {
+        this.provider = provider;
+    }
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
+    }
+
+    public void setProfileCompleted(boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
+    }
 }

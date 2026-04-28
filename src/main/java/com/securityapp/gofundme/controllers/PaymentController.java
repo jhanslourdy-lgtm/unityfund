@@ -17,21 +17,23 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import org.springframework.ui.Model;
 
 @Controller
 @RequestMapping("/api/payments")
 public class PaymentController {
-    
+
     @Autowired
     private PaymentService paymentService;
-    
+
     @Autowired
     private StripePaymentProvider stripeProvider;
-    
+
+    @Autowired
+    private MonCashPaymentProvider moncashProvider;
+
     @Autowired
     private UserService userService;
-    
+
     @PostMapping("/create-intent")
     @ResponseBody
     public ResponseEntity<?> createPaymentIntent(
@@ -45,7 +47,7 @@ public class PaymentController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-    
+
     @PostMapping("/webhook/stripe")
     @ResponseBody
     public ResponseEntity<String> handleStripeWebhook(
@@ -53,59 +55,78 @@ public class PaymentController {
             @RequestHeader("Stripe-Signature") String sigHeader,
             @Value("${stripe.webhook.secret:}") String secret) {
         try {
-            // Vérifier que le secret est configuré
             if (secret == null || secret.isEmpty() || secret.contains("localhost")) {
                 return ResponseEntity.status(500).body("Webhook secret non configuré");
             }
-            
+
             String transactionId = stripeProvider.handleWebhook(payload, sigHeader, secret);
-            
+
             if (transactionId != null) {
-                // Confirmer le paiement en base (met à jour la campagne, etc.)
-                paymentService.confirmPayment(transactionId, "{\"status\": \"SUCCESS\", \"provider\": \"stripe\"}");
+                paymentService.confirmPayment(transactionId, "{\"status\":\"SUCCESS\",\"provider\":\"stripe\"}");
             }
-            
+
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
             return ResponseEntity.status(400).body("Erreur webhook: " + e.getMessage());
         }
     }
-    /**
- * Confirmation manuelle après succès Stripe (fallback si webhook lent/absent)
- */
-@PostMapping("/confirm")
-@ResponseBody
-public ResponseEntity<?> confirmPaymentManually(@RequestBody Map<String, String> payload) {
-    try {
-        String transactionId = payload.get("transactionId");
-        paymentService.confirmPayment(transactionId, "{\"status\": \"SUCCESS\", \"provider\": \"stripe_manual\"}");
-        return ResponseEntity.ok(Map.of("success", true));
-    } catch (Exception e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+
+    @PostMapping("/confirm")
+    @ResponseBody
+    public ResponseEntity<?> confirmPaymentManually(@RequestBody Map<String, String> payload) {
+        try {
+            String transactionId = payload.get("transactionId");
+            paymentService.confirmPayment(transactionId, "{\"status\":\"SUCCESS\",\"provider\":\"stripe_manual\"}");
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/fail")
+    @ResponseBody
+    public ResponseEntity<?> failPaymentManually(@RequestBody Map<String, String> payload) {
+        try {
+            String transactionId = payload.get("transactionId");
+            String reason = payload.getOrDefault("reason", "Paiement annulé ou échoué côté client");
+            String safeReason = reason.replace("\"", "'");
+            paymentService.failPayment(transactionId, "{\"status\":\"FAILED\",\"provider\":\"client\",\"reason\":\"" + safeReason + "\"}");
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/callback/moncash")
+    public String handleMonCashCallback(
+            @RequestParam(value = "transactionId", required = false) String transactionId,
+            @RequestParam(value = "orderId", required = false) String orderId,
+            @RequestParam(value = "payment_token", required = false) String paymentToken,
+            @RequestParam(value = "status", defaultValue = "FAILED") String status) {
+
+        String effectiveId = (transactionId != null) ? transactionId : orderId;
+        if (effectiveId == null) {
+            return "redirect:/payment/failed";
+        }
+
+        boolean isValid = moncashProvider.verifyPayment(effectiveId);
+
+        if (isValid) {
+            paymentService.confirmPayment(effectiveId, "{\"status\":\"SUCCESS\",\"provider\":\"moncash\"}");
+            return "redirect:/donation/success?transactionId=" + effectiveId;
+        }
+
+        try {
+            paymentService.failPayment(effectiveId, "{\"status\":\"FAILED\",\"provider\":\"moncash\"}");
+        } catch (Exception ignored) {
+            // On garde la redirection vers la page d'échec même si l'audit échoue.
+        }
+
+        return "redirect:/payment/failed";
+    }
+
+    @GetMapping("/payment/failed")
+    public String paymentFailed() {
+        return "payment-failed";
     }
 }
- @Autowired
-private MonCashPaymentProvider moncashProvider;
-
-@GetMapping("/callback/moncash")
-public String handleMonCashCallback(
-        @RequestParam(value = "transactionId", required = false) String transactionId,
-        @RequestParam(value = "orderId", required = false) String orderId,
-        @RequestParam(value = "payment_token", required = false) String paymentToken,
-        @RequestParam(value = "status", defaultValue = "FAILED") String status) {
-    
-    String effectiveId = (transactionId != null) ? transactionId : orderId;
-    if (effectiveId == null) return "redirect:/payment/failed";
-
-    boolean isValid = moncashProvider.verifyPayment(effectiveId);
-    
-    if (isValid) {
-        paymentService.confirmPayment(effectiveId, "{\"status\":\"SUCCESS\",\"provider\":\"moncash\"}");
-        return "redirect:/donation/success?transactionId=" + effectiveId;
-    }
-    return "redirect:/payment/failed";
-}
-@GetMapping("/payment/failed")
-public String paymentFailed() {
-    return "payment-failed";
-}}

@@ -3,6 +3,7 @@ package com.securityapp.gofundme.controllers;
 import com.securityapp.gofundme.model.Campaign;
 import com.securityapp.gofundme.model.CampaignMedia;
 import com.securityapp.gofundme.model.CampaignStatus;
+import com.securityapp.gofundme.model.DonationStatus;
 import com.securityapp.gofundme.model.Category;
 import com.securityapp.gofundme.model.User;
 import com.securityapp.gofundme.repositories.CampaignMediaRepository;
@@ -260,7 +261,7 @@ public class CampaignController {
         model.addAttribute("ogImage", ogImage);
         model.addAttribute("ogUrl", ogUrl);
         model.addAttribute("campaign", campaign);
-        model.addAttribute("donations", donationRepository.findByCampaignIdOrderByCreatedAtDesc(id));
+        model.addAttribute("donations", donationRepository.findByCampaignIdAndStatusOrderByCreatedAtDesc(id, DonationStatus.SUCCESS));
 
         if (userDetails != null) {
             try {

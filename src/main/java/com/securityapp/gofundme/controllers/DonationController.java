@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.securityapp.gofundme.controllers;
 
 import com.securityapp.gofundme.model.Campaign;
@@ -24,6 +20,12 @@ public class DonationController {
     @Value("${stripe.public.key:}")
     private String stripePublicKey;
 
+    @Value("${payment.logo.stripe:/images/stripe-logo.png}")
+    private String stripeLogoUrl;
+
+    @Value("${payment.logo.moncash:/images/moncash-logo.png}")
+    private String moncashLogoUrl;
+
     @Autowired
     private CampaignRepository campaignRepository;
 
@@ -37,7 +39,9 @@ public class DonationController {
 
         model.addAttribute("campaign", campaign);
         model.addAttribute("stripePublicKey", stripePublicKey);
-        
+        model.addAttribute("stripeLogoUrl", stripeLogoUrl);
+        model.addAttribute("moncashLogoUrl", moncashLogoUrl);
+
         return "donate";
     }
 
@@ -45,7 +49,7 @@ public class DonationController {
     public String donationSuccess(@RequestParam String transactionId, Model model) {
         Payment payment = paymentRepository.findByTransactionId(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transaction non trouvée"));
-        
+
         model.addAttribute("payment", payment);
         model.addAttribute("campaign", payment.getDonation().getCampaign());
         return "donation-success";

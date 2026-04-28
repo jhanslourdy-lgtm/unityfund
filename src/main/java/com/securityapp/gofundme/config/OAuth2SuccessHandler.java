@@ -1,5 +1,6 @@
 package com.securityapp.gofundme.config;
 
+import com.securityapp.gofundme.model.AuthProvider;
 import com.securityapp.gofundme.model.Role;
 import com.securityapp.gofundme.model.User;
 import com.securityapp.gofundme.repositories.UserRepository;
@@ -24,62 +25,112 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
     @Autowired
     private UserRepository userRepository;
 
-    // Instance locale pour casser le cycle
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
-                                        Authentication authentication) throws IOException, ServletException {
-        
+    public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication
+    ) throws IOException, ServletException {
+
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
+
         String email = oauth2User.getAttribute("email");
-        String firstName = oauth2User.getAttribute("given_name");
-        String lastName = oauth2User.getAttribute("family_name");
 
         User user = userRepository.findByEmail(email)
-            .orElseGet(() -> createUser(oauth2User));
+                .map(existingUser -> updateGoogleInfo(existingUser, oauth2User))
+                .orElseGet(() -> createGoogleUser(oauth2User));
 
-        org.springframework.security.core.userdetails.UserDetails userDetails = 
-            org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .roles(user.getRole().name().replace("ROLE_", ""))
-                .build();
+        org.springframework.security.core.userdetails.UserDetails userDetails =
+                org.springframework.security.core.userdetails.User.builder()
+                        .username(user.getEmail())
+                        .password(user.getPassword())
+                        .roles(user.getRole().name().replace("ROLE_", ""))
+                        .build();
 
-        Authentication newAuth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.getAuthorities());
-        
+        Authentication newAuth =
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
         SecurityContextHolder.getContext().setAuthentication(newAuth);
 
-        setDefaultTargetUrl("/home");
-        super.onAuthenticationSuccess(request, response, newAuth);
+        if (!user.isProfileCompleted()) {
+            response.sendRedirect("/complete-profile");
+            return;
+        }
+
+        if (user.getRole() == Role.ROLE_ADMIN) {
+            response.sendRedirect("/admin/dashboard");
+            return;
+        }
+
+        response.sendRedirect("/home");
     }
 
-//    private User createUser(OAuth2User oauth2User) {
-//        User user = new User();
-//        user.setEmail(oauth2User.getAttribute("email"));
-//        user.setFirstName(oauth2User.getAttribute("given_name"));
-//        user.setLastName(oauth2User.getAttribute("family_name"));
-//        user.setRole(Role.ROLE_USER);
-//        user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
-//        user.setEmailVerified(true);
-//        return userRepository.save(user);
-//    }
-        private User createUser(OAuth2User oauth2User) {
+    private User createGoogleUser(OAuth2User oauth2User) {
         User user = new User();
+
         user.setEmail(oauth2User.getAttribute("email"));
-        user.setFirstName(oauth2User.getAttribute("given_name"));
-        user.setLastName(oauth2User.getAttribute("family_name"));
+        user.setFirstName(getOrDefault(oauth2User.getAttribute("given_name"), "Utilisateur"));
+        user.setLastName(getOrDefault(oauth2User.getAttribute("family_name"), "Google"));
+
         user.setRole(Role.ROLE_USER);
         user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         user.setEmailVerified(true);
-        
-        // RÉCUPÉRATION PHOTO GOOGLE
+
+        user.setProvider(AuthProvider.GOOGLE);
+        user.setProviderId(oauth2User.getAttribute("sub"));
+        user.setProfileCompleted(false);
+
         String picture = oauth2User.getAttribute("picture");
-        if (picture != null && !picture.isEmpty()) {
+        if (picture != null && !picture.isBlank()) {
             user.setProfileImageUrl(picture);
         }
-        
+
         return userRepository.save(user);
+    }
+
+    private User updateGoogleInfo(User user, OAuth2User oauth2User) {
+        boolean changed = false;
+
+        if (user.getProvider() == null) {
+            user.setProvider(AuthProvider.GOOGLE);
+            changed = true;
+        }
+
+        if (user.getProviderId() == null || user.getProviderId().isBlank()) {
+            user.setProviderId(oauth2User.getAttribute("sub"));
+            changed = true;
+        }
+
+        String picture = oauth2User.getAttribute("picture");
+        if (picture != null && !picture.isBlank()
+                && (user.getProfileImageUrl() == null || user.getProfileImageUrl().isBlank())) {
+            user.setProfileImageUrl(picture);
+            changed = true;
+        }
+
+        if (!user.isEmailVerified()) {
+            user.setEmailVerified(true);
+            changed = true;
+        }
+
+        if (changed) {
+            return userRepository.save(user);
+        }
+
+        return user;
+    }
+
+    private String getOrDefault(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+
+        return value;
     }
 }

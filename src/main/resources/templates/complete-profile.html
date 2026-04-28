@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Compléter le profil - UnityFund</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .profile-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .profile-card {
+            width: 100%;
+            max-width: 720px;
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+            overflow: hidden;
+        }
+
+        .profile-header {
+            padding: 32px;
+            background: linear-gradient(135deg, #0b4f9c, #1677d2);
+            color: white;
+        }
+
+        .profile-header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .profile-header p {
+            margin: 0;
+            opacity: 0.92;
+            line-height: 1.5;
+        }
+
+        .profile-body {
+            padding: 32px;
+        }
+
+        .google-user {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding: 14px;
+            border-radius: 14px;
+            background: #f8fafc;
+        }
+
+        .google-user img {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .google-user strong {
+            display: block;
+            font-size: 16px;
+        }
+
+        .google-user span {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 13px 14px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #0b4f9c;
+            box-shadow: 0 0 0 3px rgba(11, 79, 156, 0.12);
+        }
+
+        .actions {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            border: none;
+            background: #0b4f9c;
+            color: white;
+            padding: 13px 22px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            text-decoration: none;
+            color: #0b4f9c;
+            padding: 13px 18px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 700px) {
+            .profile-header, .profile-body {
+                padding: 24px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                justify-content: stretch;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="profile-wrapper">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h1>Compléter votre profil</h1>
+            <p>
+                Votre compte Google a été créé avec succès. Ajoutez quelques informations
+                pour finaliser votre inscription sur UnityFund.
+            </p>
+        </div>
+
+        <div class="profile-body">
+            <div class="google-user">
+                <img th:if="${user.profileImageUrl != null}" th:src="${user.profileImageUrl}" alt="Photo de profil">
+                <div>
+                    <strong th:text="${user.firstName + ' ' + user.lastName}">Utilisateur Google</strong>
+                    <span th:text="${user.email}">email@example.com</span>
+                </div>
+            </div>
+
+            <form th:action="@{/complete-profile}" method="post">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="phone">Téléphone</label>
+                        <input id="phone" name="phone" type="text" placeholder="+509..." th:value="${user.phone}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="country">Pays / Ville</label>
+                        <input id="country" name="country" type="text" placeholder="Haïti, Port-au-Prince" th:value="${user.country}">
+                    </div>
+
+                    <div class="form-group full">
+                        <label for="website">Site web ou réseau social</label>
+                        <input id="website" name="website" type="url" placeholder="https://..." th:value="${user.website}">
+                    </div>
+
+                    <div class="form-group full">
+                        <label for="bio">Courte présentation</label>
+                        <textarea id="bio" name="bio" placeholder="Présentez-vous brièvement..." th:text="${user.bio}"></textarea>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <a class="btn-secondary" th:href="@{/logout}">Se déconnecter</a>
+                    <button class="btn-primary" type="submit">Terminer mon inscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

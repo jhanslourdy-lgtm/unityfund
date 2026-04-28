@@ -114,15 +114,15 @@
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="method" value="STRIPE" checked onchange="toggleMethod('STRIPE')" class="peer hidden"/>
                                 <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
-                                    <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">credit_card</span>
+                                    <img th:src="${stripeLogoUrl}" src="/images/stripe-logo.png" alt="Stripe" class="mx-auto mb-2 h-9 max-w-[120px] object-contain"/>
                                     <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Carte bancaire</p>
-                                    <p class="text-xs text-slate-400 mt-1">Visa, Mastercard</p>
+                                    <p class="text-xs text-slate-400 mt-1">Paiement sécurisé Stripe</p>
                                 </div>
                             </label>
                             <label class="flex-1 cursor-pointer">
                                 <input type="radio" name="method" value="MONCASH" onchange="toggleMethod('MONCASH')" class="peer hidden"/>
                                 <div class="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 text-center transition-all">
-                                    <span class="material-symbols-outlined text-2xl mb-1 text-slate-400 peer-checked:text-primary">phone_iphone</span>
+                                    <img th:src="${moncashLogoUrl}" src="/images/moncash-logo.png" alt="MonCash" class="mx-auto mb-2 h-9 max-w-[140px] object-contain"/>
                                     <p class="text-sm font-bold text-slate-700 dark:text-slate-200">MonCash</p>
                                     <p class="text-xs text-slate-400 mt-1">Digicel Haïti</p>
                                 </div>
@@ -205,6 +205,7 @@
     <script th:inline="javascript">
         const campaignId = [[${campaign.id}]];
         const stripePublicKey = /*[[${stripePublicKey}]]*/ 'pk_test_your_key';
+        let currentTransactionId = null;
         
         // Initialisation Stripe
         const stripe = Stripe(stripePublicKey);
@@ -301,6 +302,7 @@
                 }
 
                 const data = await response.json();
+                currentTransactionId = data.transactionId || null;
                 
                 if (data.error) {
                     throw new Error(data.error);
@@ -345,6 +347,17 @@
 }
             } catch (err) {
                 console.error('Erreur paiement:', err);
+                if (currentTransactionId) {
+                    try {
+                        await fetch('/api/payments/fail', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ transactionId: currentTransactionId, reason: err.message || 'Paiement échoué' })
+                        });
+                    } catch (ignore) {
+                        console.warn('Impossible de marquer le don comme échoué', ignore);
+                    }
+                }
                 globalError.textContent = err.message || 'Une erreur est survenue';
                 globalError.classList.remove('hidden');
                 submitBtn.disabled = false;
