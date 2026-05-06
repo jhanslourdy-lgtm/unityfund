@@ -1,152 +1,98 @@
-///*
-// * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-// * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
-// */
-//package com.securityapp.gofundme.services;
-//
-//import jakarta.mail.internet.MimeMessage;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.mail.javamail.JavaMailSender;
-//import org.springframework.mail.javamail.MimeMessageHelper;
-//import org.springframework.stereotype.Service;
-//
-//@Service
-//public class EmailService {
-//
-//    @Autowired
-//    private JavaMailSender mailSender;
-//
-//    @Value("${spring.mail.username}")
-//    private String fromEmail;
-//
-//    public void sendVerificationEmail(String to, String code) {
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-//
-//            helper.setFrom(fromEmail, "UnityFund");
-//            helper.setTo(to);
-//            helper.setSubject("Votre code de vérification UnityFund");
-//
-//            String html = """
-//                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-//                    <h2 style="color: #10b77f;">Bienvenue sur UnityFund !</h2>
-//                    <p>Pour activer votre compte, veuillez utiliser le code de vérification suivant :</p>
-//                    <div style="background: #f6f8f7; padding: 20px; text-align: center; font-size: 32px; 
-//                                font-weight: bold; letter-spacing: 8px; color: #10b77f; border-radius: 8px;">
-//                        %s
-//                    </div>
-//                    <p style="color: #666; margin-top: 20px;">Ce code est valable pendant 15 minutes.</p>
-//                    <p style="color: #999; font-size: 12px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
-//                </div>
-//                """.formatted(code);
-//
-//            helper.setText(html, true);
-//            mailSender.send(message);
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException("Erreur envoi email: " + e.getMessage());
-//        }
-//    }
-//}
 package com.securityapp.gofundme.services;
 
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+
+import java.util.*;
 
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final String API_KEY = "TON_API_KEY_BREVO";
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    public void sendVerificationEmail(String toEmail, String token) {
 
-    public void sendVerificationEmail(String to, String code) {
+        String url = "https://api.brevo.com/v3/smtp/email";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        Map<String, Object> body = new HashMap<>();
+
+        body.put("sender", Map.of(
+                "name", "UnityFund",
+                "email", "no-reply@unityfund.com"
+        ));
+
+        body.put("to", List.of(Map.of("email", toEmail)));
+
+        body.put("subject", "Vérifie ton compte UnityFund");
+
+        String link = "https://ton-site.com/verify?token=" + token;
+
+        body.put("htmlContent",
+                "<div style='font-family:sans-serif'>" +
+                "<h2>Bienvenue sur UnityFund</h2>" +
+                "<p>Clique ici pour activer ton compte :</p>" +
+                "<a href='" + link + "' style='background:#16a34a;color:white;padding:10px 15px;text-decoration:none;border-radius:5px;'>Vérifier</a>" +
+                "<p>Si ça ne marche pas, copie ce lien :</p>" +
+                "<p>" + link + "</p>" +
+                "</div>"
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("api-key", API_KEY);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail, "UnityFund");
-            helper.setTo(to);
-            helper.setSubject("Votre code de vérification UnityFund");
-
-            String html = """
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #10b77f;">Bienvenue sur UnityFund !</h2>
-                    <p>Pour activer votre compte, veuillez utiliser le code de vérification suivant :</p>
-                    <div style="background: #f6f8f7; padding: 20px; text-align: center; font-size: 32px; 
-                                font-weight: bold; letter-spacing: 8px; color: #10b77f; border-radius: 8px;">
-                        %s
-                    </div>
-                    <p style="color: #666; margin-top: 20px;">Ce code est valable pendant 15 minutes.</p>
-                    <p style="color: #999; font-size: 12px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
-                </div>
-                """.formatted(code);
-
-            helper.setText(html, true);
-            mailSender.send(message);
-
+            restTemplate.postForEntity(url, request, String.class);
         } catch (Exception e) {
-            throw new RuntimeException("Erreur envoi email: " + e.getMessage());
+            System.out.println("❌ Brevo failed → fallback console");
+            System.out.println("Lien verification: " + link);
         }
     }
+    public void sendResetPasswordEmail(String toEmail, String token) {
 
-    // ========== NOUVELLE MÉTHODE ==========
-    public void sendPasswordResetEmail(String to, String resetLink) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    String url = "https://api.brevo.com/v3/smtp/email";
 
-            helper.setFrom(fromEmail, "UnityFund");
-            helper.setTo(to);
-            helper.setSubject("Réinitialisation de votre mot de passe UnityFund");
+    RestTemplate restTemplate = new RestTemplate();
 
-            String html = """
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: #10b77f; font-size: 28px; margin: 0;">UnityFund</h2>
-                    </div>
-                    
-                    <h3 style="color: #333; font-size: 20px;">Réinitialisation de mot de passe</h3>
-                    
-                    <p style="color: #666; line-height: 1.6;">
-                        Vous avez demandé la réinitialisation de votre mot de passe. 
-                        Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :
-                    </p>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="%s" 
-                           style="background: #10b77f; color: white; padding: 14px 32px; text-decoration: none;
-                                  border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px;">
-                            Réinitialiser mon mot de passe
-                        </a>
-                    </div>
-                    
-                    <p style="color: #999; font-size: 13px; line-height: 1.5;">
-                        Ce lien est valable pendant 24 heures. Si vous n'avez pas demandé cette réinitialisation, 
-                        vous pouvez ignorer cet email en toute sécurité.
-                    </p>
-                    
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                    
-                    <p style="color: #bbb; font-size: 12px; text-align: center;">
-                        © 2026 UnityFund. Tous droits réservés.
-                    </p>
-                </div>
-                """.formatted(resetLink);
+    String link = "https://ton-site.com/reset-password?token=" + token;
 
-            helper.setText(html, true);
-            mailSender.send(message);
+    Map<String, Object> body = new HashMap<>();
 
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur envoi email reset: " + e.getMessage());
-        }
+    body.put("sender", Map.of(
+            "name", "UnityFund",
+            "email", "no-reply@unityfund.com"
+    ));
+
+    body.put("to", List.of(Map.of("email", toEmail)));
+
+    body.put("subject", "Réinitialisation de ton mot de passe");
+
+    body.put("htmlContent",
+        "<div style='font-family:sans-serif'>" +
+        "<h2 style='color:#16a34a;'>UnityFund</h2>" +
+        "<p>Tu as demandé à réinitialiser ton mot de passe.</p>" +
+        "<a href='" + link + "' style='background:#dc2626;color:white;padding:10px 15px;border-radius:5px;text-decoration:none;'>Réinitialiser</a>" +
+        "<p>Ce lien expire dans 1 heure.</p>" +
+        "<p>Si ce n’est pas toi, ignore cet email.</p>" +
+        "</div>"
+    );
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("api-key", API_KEY);
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+    try {
+        restTemplate.postForEntity(url, request, String.class);
+    } catch (Exception e) {
+        System.out.println("❌ Brevo failed → fallback");
+        System.out.println("Lien reset: " + link);
     }
+}
 }
